@@ -1,0 +1,7 @@
+History.txt
+Manifest.txt
+README.txt
+Rakefile
+bin/model_set
+lib/model_set.rb
+test/test_model_set.rb
