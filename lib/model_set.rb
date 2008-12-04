@@ -2,11 +2,18 @@ require 'rubygems'
 require 'active_record'
 require 'deep_clonable'
 require 'ordered_set'
-require File.dirname(__FILE__) + '/multi_set'
+
+$:.unshift(File.dirname(__FILE__))
+require 'multi_set'
+require 'model_set/query'
+require 'model_set/set_query'
+require 'model_set/conditions'
+require 'model_set/conditions_query'
+require 'model_set/sql_methods'
+require 'model_set/sql_query'
+require 'model_set/raw_sql_query'
 
 class ModelSet
-  VERSION = "0.8.0"
-
   include Enumerable
   include ActiveSupport::CoreExtensions::Array::Conversions
 
@@ -14,72 +21,32 @@ class ModelSet
 
   MAX_CACHE_SIZE = 1000 if not defined?(MAX_CACHE_SIZE)
 
-  def initialize(models)
-    if models.kind_of?(self.class)
-      self.ids      = models.ids.to_ordered_set
-      @models_by_id = models.models_by_id
-    elsif models
-      self.ids = as_ids(models)
+  attr_reader :query
+
+  def initialize(query_or_models)
+    if query_or_models.kind_of?(Query)
+      @query = query_or_models
+    elsif query_or_models.kind_of?(self.class)
+      self.ids = query_or_models.ids
+      @models_by_id = query_or_models.models_by_id
+    elsif query_or_models
+      self.ids = as_ids(query_or_models)
     end
   end
 
   def ids
-    if limit?
-      limited_model_ids.to_a
-    else
-      model_ids.to_a
-    end
+    model_ids.to_a
   end
 
   def missing_ids
     ( @missing_ids || [] ).uniq
   end
 
-  ACTION_TO_OPERATOR = {
-    :add!       => :or,
-    :subtract!  => :not,
-    :intersect! => :and,
-  } if not defined?(ACTION_TO_OPERATOR)
-
-  def perform_action!(action, models)
-    operator = ACTION_TO_OPERATOR[action.to_sym]
-    raise "invalid action #{action}" unless operator
-
-    # FIXME: OR has terrible performance in postgres, so we have to anchor everything for now.
-    self.anchor_ids! # FIXME
-    if models.kind_of?(self.class)
-      models.anchor_ids! # FIXME
-      merge_cache!(models) 
-      if anchored? and models.anchored?
-        # Add together the model ids.
-        perform_action!(action, models.ids)
-      else
-        anchor_sql! if joins?
-        
-        if models.joins?
-          # Cannot combine joins, so we have to get the underlying sql to add a condition.
-          sql = models.all_ids_sql
-          add_conditions!(operator, "#{prefix(id_field)} IN (#{sql})")
-        else
-          # Add together the conditions.
-          combine_conditions!(operator, models)
-        end
-      end
-    else
-      ids = as_ids(models)
-      if anchored?
-        model_ids.send(action, ids)
-        self.ids = model_ids
-      else
-        add_conditions!(operator, in_query(ids))
-      end
-    end
-    self
-  end
-
-  ACTION_TO_OPERATOR.keys.each do |action|
+  [:add!, :subtract!, :intersect!, :reorder!].each do |action|  
     define_method(action) do |models|
-      perform_action!(action, models)
+      anchor!(:set)
+      query.send(action, as_ids(models))
+      self
     end
   end
 
@@ -94,20 +61,26 @@ class ModelSet
   clone_method :without  
 
   clone_method :page
-  def page!(page = nil)
-    raise 'cannot have a page without a limit' if not @limit
-    page ||= 1
-    @offset = @limit * (page.to_i - 1)
-    clear_limited_id_cache!
-    self
+  def page!(page)
+    @page   = page
+    @offset = nil
+    clear_id_cache!
   end
 
   clone_method :limit
-  def limit!(limit, offset = 0)
-    @limit  = limit.to_i unless limit.nil?
-    @offset = offset.to_i
-    clear_limited_id_cache!
-    self
+  def limit!(limit, offset = nil)
+    @limit  = limit
+    @offset = offset
+    @page   = nil if offset
+    clear_id_cache!
+  end
+
+  clone_method :unlimited
+  def unlimited!
+    @limit  = nil
+    @offset = nil
+    @page   = nil
+    clear_id_cache!
   end
 
   def include?(model)
@@ -282,16 +255,16 @@ class ModelSet
   end
 
   def count
-    @count ||= if model_ids_fetched? or not limit?
-      model_ids.size
+    @count ||= if (not model_ids_fetched? or limit?) and query.respond_to?(:count)
+      query.count
     else
-      aggregate("COUNT(DISTINCT #{prefix(id_field)})").to_i
+      model_ids.size
     end
   end
 
   def size
     @size ||= if limit?
-      limited_model_ids.size
+      model_ids.size
     else
       count
     end
@@ -302,8 +275,8 @@ class ModelSet
     return super if block_given?
 
     @any ||= if limit?
-      limited_model_ids.any?
-    else 
+      model_ids.any?
+    else
       count > 0
     end
   end
@@ -318,126 +291,48 @@ class ModelSet
   end
 
   def ids=(model_ids)    
-    anchor_ids!(model_ids)
-  end
-
-  def anchor_ids!(model_ids = self.ids)
-    model_ids.collect! {|id| id.to_i}
-    model_ids = model_ids.to_ordered_set
-    conditions = in_query(model_ids)
-
-    reset_conditions!(conditions)
-    reset_limit!
-
-    @model_ids = model_ids
-    @anchored  = true
+    self.query = SetQuery.new(self.class)
+    query.add!(model_ids)
     self
   end
 
-  def anchor_sql!
-    ids = @model_ids
-    reset_conditions!("#{prefix(id_field)} IN (#{all_ids_sql})")
-    @model_ids = ids
-    self
-  end
-
-  def anchored?
-    @anchored
-  end
-
-  def remove_missing!
+  def query=(query)
+    @query = query
     clear_id_cache!
-    anchor_ids!
   end
 
-  def reorder!(other)
-    model_ids.reorder!(as_ids(other))
-    anchor_ids!(model_ids)
-  end
+  QUERY_TYPES = {
+    :set => SetQuery,
+    :sql => SQLQuery,
+#    :sphinx => SphinxQuery,
+  } if not defined?(QUERY_TYPES)
 
+  def anchor!(query_type = :set)
+    query_type = QUERY_TYPES[query_type] if query_type.kind_of?(Symbol)
+    if not query.kind_of?(query_type)
+      self.query = query_type.new(self)
+    end
+    clear_id_cache!
+    self
+  end
+  
   def limit?
     not @limit.nil?
   end
 
-  def add_conditions!(*conditions)
-    clear_id_cache!
+  [:add_conditions!, :add_joins!, :in!, :invert!, :order_by!, :unsorted!].each do |method_name|
+    define_method(method_name) do |*args|
+      # Use :sql as the default query engine.
+      opts = args.last.kind_of?(Hash) ? args.pop : {}
+      query_type = opts.delete(:query_type) || :sql
+      args << opts unless opts.empty?
 
-    if conditions.first.kind_of?(Symbol)
-      operator = conditions.shift
-      raise "invalid operator :#{operator}" unless valid_operator?(operator)
+      # Anchor to the correct query type and then forward the method to the query.
+      anchor!(query_type)
+      query.send(method_name, *args)
+      clear_id_cache!
+      self
     end
-    operator ||= :and
-
-    if operator == :not
-      raise 'operator :not is unary; multiple sub-conditions provided' if conditions.size > 1
-      invert = true
-      operator = :and
-    end
-
-    @conditions ||= [operator]
-    if @conditions.first != operator
-      @conditions = [operator, @conditions]
-    end
-        
-    conditions.each do |condition|
-      condition = sanitize(condition)
-      if invert
-        @conditions << [:not, condition]
-      else
-        @conditions << condition
-      end
-    end
-    @conditions.uniq!
-    self
-  end
-
-  def combine_conditions!(operator, other)
-    clear_id_cache!
-
-    conditions = other.conditions
-    raise "invalid operator :#{operator}" unless valid_operator?(operator)
-
-    # In this case, :not actually means :and :not.
-    if operator == :not
-      conditions = [:not, conditions]
-      operator = :and
-    end
-
-    if @conditions.first == operator
-      @conditions << conditions
-    else
-      @conditions = [operator, @conditions, conditions]
-    end
-  end
-
-  def invert!   
-    if @conditions.size == 2 
-      if @conditions.first == :not
-        if @conditions.last.kind_of?(Array)
-          @conditions = @conditions.last
-        else
-          @conditions = [:and, @conditions.last]
-        end
-      else
-        @conditions = [:not, @conditions.last]
-      end
-    else
-      @conditions = [:not, @conditions]
-    end
-  end
-
-  def add_joins!(*joins)
-    @joins ||= []
-
-    joins.each do |join|
-      @joins << sanitize(join)
-    end
-    @joins.uniq!
-    self
-  end
-
-  def joins?
-    not joins.nil?
   end
 
   def add_fields!(fields)
@@ -459,53 +354,18 @@ class ModelSet
     self.clear_cache!
   end
 
-  def order_by!(order, joins = nil)
-    @sort_order = order ? order.to_s : nil
-    @sort_joins = joins
-    clear_id_cache!
-    self
-  end
-
-  def unsorted!
-    order_by!(nil)
-  end
-
-  def aggregate(query, opts = {})
-    sql = "SELECT #{query} #{from_clause}"
-    sql << " LIMIT #{opts[:limit]}"       if opts[:limit]
-    sql << " GROUP BY #{opts[:group_by]}" if opts[:group_by]
-    result = db.select_rows(sql).first
-    result.size == 1 ? result.first : result
-  end
-
-  def reset_conditions!(initial_condition = nil)
-    @conditions = nil
-    @joins      = nil
-    @sort_order = nil
-    @sort_joins = nil
-
-    if initial_condition
-      add_conditions!(initial_condition)
-    end
-  end
-
-  def reset_limit!
-    @limit  = nil
-    @offset = nil
+  def aggregate(*args)
+    anchor!(:sql)
+    query.aggregate(*args)
   end
 
   def clear_id_cache!
     @model_ids   = nil
     @count       = nil
+    @size        = nil
+    @any         = nil
     @missing_ids = nil
-    @anchored    = false
-    clear_limited_id_cache!
-  end
-
-  def clear_limited_id_cache!
-    @any               = nil
-    @size              = nil
-    @limited_model_ids = nil
+    self
   end
 
   def clear_cache!
@@ -533,10 +393,8 @@ class ModelSet
 
   def clone_fields
     # Do a deep copy of the fields we want to modify.
-    @joins             = @joins.clone             if @joins
-    @conditions        = @conditions.clone        if @conditions
+    @query             = @query.clone             if @query
     @model_ids         = @model_ids.clone         if @model_ids
-    @limited_model_ids = @limited_model_ids.clone if @limited_model_ids
     @add_fields        = @add_fields.clone        if @add_fields
     @included_models   = @included_models.clone   if @included_models
   end
@@ -574,9 +432,9 @@ class ModelSet
   end
 
   def self.find_by_sql(sql)
-    set = all
-    set.add_conditions!("#{prefix(id_field)} IN (#{sql})")
-    set
+    query = RawSQLQuery.new
+    query.sql = sql
+    new(query)
   end
 
   def self.constructor(filter_name)
@@ -599,6 +457,10 @@ class ModelSet
     end
   end
 
+  def self.model_name
+    model_class.name
+  end
+
   def self.set_class_suffix
     'Set'
   end
@@ -611,12 +473,6 @@ class ModelSet
     end
   end
 
-  def self.prefix(*fields)
-    [*fields].collect do |field|
-      "#{table_name}.#{field}"
-    end
-  end
-
   def self.id_field(id_field = nil)
     if id_field.nil?
       @id_field ||= 'id'
@@ -625,78 +481,37 @@ class ModelSet
     end
   end
 
-  def self.db
-    model_class.connection
-  end
-
-  def self.postgres?
-    defined?(PGconn) and db.raw_connection.is_a?(PGconn)
-  end
-
-  def self.in_query(ids, field = nil)
-    field ||= prefix(id_field)
-    if ids.empty?
-      "false"
-    elsif postgres?
-      "#{field} = ANY ('{#{ids.join(',')}}'::bigint[])"
-    else
-      "#{field} IN (#{ids.join(',')})"
-    end
+  def self.id_field_with_prefix
+    "#{self.table_name}.#{self.id_field}"
   end
 
   # Define instance methods based on class methods.
-  [:model_class, :table_name, :prefix, :id_field, :db, :in_query].each do |method|
+  [:model_class, :model_name, :table_name, :id_field, :id_field_with_prefix].each do |method|
     define_method(method) do |*args|
       self.class.send(method, *args)
     end
   end
 
 protected
-  attr_reader :conditions, :joins
+
+  def db
+    model_class.connection
+  end
 
   def models_by_id
     @models_by_id ||= {}
   end
 
   def model_ids
-    if @model_ids.nil?
-      fetch_model_ids
-    end
-    @model_ids
+    raise "cannot fetch model_ids without a query" unless query
+    @model_ids ||= query.ids(:limit => @limit, :page => @page, :offset => @offset)
   end
-    
+  
   def model_ids_fetched?
     not @model_ids.nil?
   end
 
-  def limited_model_ids
-    if @limited_model_ids.nil?
-      if model_ids_fetched?
-        @limited_model_ids = @model_ids.limit(@limit, @offset)
-      else
-        fetch_limited_model_ids
-      end
-    end
-    @limited_model_ids
-  end
-    
-  def limited_model_ids_fetched?
-    not @limited_model_ids.nil?
-  end
-
-  def all_ids_sql
-    "#{select_clause} #{from_clause} #{order_clause}"
-  end
-
-  def limited_ids_sql
-    "#{select_clause} #{from_clause} #{order_clause} #{limit_clause}"
-  end
-
 private
-
-  def sanitize(condition)
-    ActiveRecord::Base.send(:sanitize_sql, condition)
-  end
 
   def fetch_models(ids_to_fetch)
     ids_to_fetch = ids_to_fetch - models_by_id.keys
@@ -716,7 +531,7 @@ private
         models = model_class.find(:all,
           :select     => fields.compact.join(','),
           :joins      => joins.compact.join(' '),
-          :conditions => in_query(ids_to_fetch),
+          :conditions => db.ids_clause(ids_to_fetch, id_field_with_prefix),
           :include    => @included_models
         )
       end
@@ -725,77 +540,6 @@ private
         models_by_id[id] ||= model
       end
     end
-  end
-
-  def fetch_model_ids
-    selected_ids = db.select_values(all_ids_sql)
-    selected_ids.collect! {|id| id.to_i}
-    @model_ids = selected_ids.to_ordered_set
-  end
-
-  def fetch_limited_model_ids
-    selected_ids = db.select_values(limited_ids_sql)
-    selected_ids.collect! {|id| id.to_i}
-    @limited_model_ids = selected_ids.to_ordered_set
-  end
-
-  def select_clause
-    "SELECT #{table_name}.#{id_field}"
-  end
-
-  def limit_clause
-    return unless @limit
-    limit = "LIMIT #{@limit}"
-    limit << " OFFSET #{@offset}" if @offset > 0
-    limit
-  end
-
-  def from_clause
-    "FROM #{table_name} #{join_clause} WHERE #{conditions_clause}"
-  end
-      
-  def order_clause
-    return unless @sort_order
-    # prevent sql-injection attacks from the list view page which takes order by and passes it here
-    "ORDER BY #{@sort_order.gsub(/[^\w_, \.\(\)]/, '')}"
-  end
-
-  def conditions_clause(conditions = @conditions)
-    return "(#{conditions})" if conditions.kind_of?(String)
-    raise 'refusing to fetch ids without conditions' if conditions.nil?
-    operator = conditions.first
-    raise "invalid operator :#{operator} in conditions" unless valid_operator?(operator)
-    condition_strings = conditions.slice(1, conditions.size - 1).collect do |condition|
-      "#{conditions_clause(condition)}"
-    end.sort_by {|s| s.size}
-
-    case condition_strings.size
-    when 0
-      raise "empty conditions found in: #{@conditions.inspect}"
-    when 1
-      if operator == :not
-        "NOT #{condition_strings.first}"
-      else
-        condition_strings.first
-      end
-    else
-      case operator
-      when :and
-        "(#{condition_strings.join(' AND ')})"
-      when :or
-        "(#{condition_strings.join(' OR ')})"
-      else
-        raise 'operator :not is unary; multiple sub-conditions provided'
-      end
-    end
-  end
-
-  def join_clause
-    return unless @joins or @sort_joins
-    joins = []
-    joins << @joins      if @joins
-    joins << @sort_joins if @sort_joins
-    joins.join(' ')
   end
 
   def as_id(model)
@@ -817,6 +561,7 @@ private
     return [] unless models
     case models
     when ModelSet
+      merge_cache!(models)
       models.ids
     when MultiSet
       models.ids_by_class[model_class]
@@ -824,10 +569,6 @@ private
       models = [models] if not models.kind_of?(Enumerable)
       models.collect {|model| as_id(model) }
     end
-  end
-
-  def valid_operator?(operator)
-    [:and, :or, :not].include?(operator)
   end
 end
 
