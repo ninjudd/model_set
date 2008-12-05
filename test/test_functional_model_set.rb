@@ -159,6 +159,7 @@ module FunctionalModelSetTest
       
       set = hero.pets
       assert_equal ['mouse', 'dog', 'dog'], set.collect {|pet| pet.species}
+
       assert_equal [sammy.id, underdog.id], set.dogs!.ids
     end
   end

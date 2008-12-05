@@ -8,8 +8,8 @@ require 'multi_set'
 require 'model_set/query'
 require 'model_set/set_query'
 require 'model_set/conditions'
-require 'model_set/conditions_query'
-require 'model_set/sql_methods'
+require 'model_set/conditioned'
+require 'model_set/sql_base_query'
 require 'model_set/sql_query'
 require 'model_set/raw_sql_query'
 
@@ -20,8 +20,6 @@ class ModelSet
   deep_clonable
 
   MAX_CACHE_SIZE = 1000 if not defined?(MAX_CACHE_SIZE)
-
-  attr_reader :query
 
   def initialize(query_or_models)
     if query_or_models.kind_of?(Query)
@@ -59,29 +57,6 @@ class ModelSet
   alias delete subtract!
   alias without! subtract!
   clone_method :without  
-
-  clone_method :page
-  def page!(page)
-    @page   = page
-    @offset = nil
-    clear_id_cache!
-  end
-
-  clone_method :limit
-  def limit!(limit, offset = nil)
-    @limit  = limit
-    @offset = offset
-    @page   = nil if offset
-    clear_id_cache!
-  end
-
-  clone_method :unlimited
-  def unlimited!
-    @limit  = nil
-    @offset = nil
-    @page   = nil
-    clear_id_cache!
-  end
 
   def include?(model)
     model_id = as_id(model)
@@ -255,30 +230,18 @@ class ModelSet
   end
 
   def count
-    @count ||= if (not model_ids_fetched? or limit?) and query.respond_to?(:count)
-      query.count
-    else
-      model_ids.size
-    end
+    query.count
   end
 
   def size
-    @size ||= if limit?
-      model_ids.size
-    else
-      count
-    end
+    query.size
   end
   alias length size
 
   def any?
     return super if block_given?
 
-    @any ||= if limit?
-      model_ids.any?
-    else
-      count > 0
-    end
+    size > 0
   end
 
   def empty?
@@ -298,7 +261,6 @@ class ModelSet
 
   def query=(query)
     @query = query
-    clear_id_cache!
   end
 
   QUERY_TYPES = {
@@ -307,12 +269,21 @@ class ModelSet
 #    :sphinx => SphinxQuery,
   } if not defined?(QUERY_TYPES)
 
-  def anchor!(query_type = :set)
-    query_type = QUERY_TYPES[query_type] if query_type.kind_of?(Symbol)
-    if not query.kind_of?(query_type)
-      self.query = query_type.new(self)
+  attr_reader :query
+
+  def query_class(type = query.class)
+    type.kind_of?(Symbol) ? QUERY_TYPES[type] : type
+  end
+
+  def query_type?(type)
+    query_class(type) == query_class
+  end
+
+  def anchor!(type = :set)
+    query_class = query_class(type)
+    if not query.kind_of?(query_class)
+      self.query = query_class.new(self)
     end
-    clear_id_cache!
     self
   end
   
@@ -320,19 +291,32 @@ class ModelSet
     not @limit.nil?
   end
 
-  [:add_conditions!, :add_joins!, :in!, :invert!, :order_by!, :unsorted!].each do |method_name|
+  [:add_conditions!, :add_joins!, :in!, :invert!, :order_by!].each do |method_name|
     define_method(method_name) do |*args|
       # Use :sql as the default query engine.
-      opts = args.last.kind_of?(Hash) ? args.pop : {}
-      query_type = opts.delete(:query_type) || :sql
-      args << opts unless opts.empty?
-
-      # Anchor to the correct query type and then forward the method to the query.
+      query_type = extract_opt(:query_type, args) || :sql
       anchor!(query_type)
+
       query.send(method_name, *args)
-      clear_id_cache!
       self
     end
+  end
+
+  [:unsorted!, :limit!, :page!, :unlimited!].each do |method_name|
+    define_method(method_name) do |*args|
+      # Don't change the query engine by default
+      query_type = extract_opt(:query_type, args)
+      anchor!(query_type) if query_type
+
+      query.send(method_name, *args)
+      self
+    end
+  end
+
+  def extract_opt(key, args)
+    opts = args.last.kind_of?(Hash) ? args.pop : {}
+    opt  = opts.delete(key)
+    args << opts unless opts.empty?
   end
 
   def add_fields!(fields)
@@ -357,15 +341,6 @@ class ModelSet
   def aggregate(*args)
     anchor!(:sql)
     query.aggregate(*args)
-  end
-
-  def clear_id_cache!
-    @model_ids   = nil
-    @count       = nil
-    @size        = nil
-    @any         = nil
-    @missing_ids = nil
-    self
   end
 
   def clear_cache!
@@ -503,14 +478,9 @@ protected
   end
 
   def model_ids
-    raise "cannot fetch model_ids without a query" unless query
-    @model_ids ||= query.ids(:limit => @limit, :page => @page, :offset => @offset)
+    query.ids
   end
   
-  def model_ids_fetched?
-    not @model_ids.nil?
-  end
-
 private
 
   def fetch_models(ids_to_fetch)

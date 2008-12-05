@@ -1,34 +1,36 @@
 class ModelSet
-  module SQLMethods    
-    def postgres?
-      defined?(PGconn) and db.raw_connection.is_a?(PGconn)
+  class SQLBaseQuery < Query
+    # SQL methods common to SQLQuery and RawSQLQuery.
+    def ids
+      @ids ||= fetch_id_set(sql)
     end
+    
+    def size
+      @size ||= ids.size
+    end
+
+  private
     
     def ids_clause(ids, field = id_field_with_prefix)
       db.ids_clause(ids, field)
     end
 
-    def ids(opts = {})
-      db.select_values( sql(opts) ).collect {|id| id.to_i}
+    def fetch_id_set(sql)
+      db.select_values(sql).collect {|id| id.to_i}.to_ordered_set
     end
-    
-  protected
-    
+
     def db
       model_class.connection
     end
-
-  private
     
     def sanitize(condition)
       ActiveRecord::Base.send(:sanitize_sql, condition)
     end
     
-    def limit_clause(opts)
-      limit, offset = limit_and_offset(opts)
+    def limit_clause
       return unless limit
-      limit_clause = "LIMIT #{limit.to_i}"
-      limit_clause << " OFFSET #{offset.to_i}" if offset > 0
+      limit_clause = "LIMIT #{limit}"
+      limit_clause << " OFFSET #{offset}" if offset > 0
       limit_clause
     end
   end

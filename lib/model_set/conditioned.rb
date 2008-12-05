@@ -1,5 +1,6 @@
 class ModelSet
-  class ConditionsQuery < Query
+  module Conditioned
+    # Shared methods for dealing with conditions.
     attr_reader :conditions, :sort_order
     
     def add_conditions!(*conditions)
@@ -19,23 +20,14 @@ class ModelSet
 
       conditions << @conditions if @conditions
       @conditions = Conditions.new(operator, *conditions)
-      self
+
+      clear_cache!
     end
 
     def invert!
       raise 'cannot invert without conditions' if @conditions.nil?
       @conditions = ~@conditions
-      self
-    end
-
-    def order_by!(order)
-      @sort_order = order
-      self
-    end
-
-    def unsorted!
-      @sort_order = nil
-      self
+      clear_cache!
     end
     
   private

@@ -36,20 +36,26 @@ class ModelSet
           # Compact the conditions if possible.
           @conditions = []
           args.each do |clause|
-            clause = self.class.new(clause) 
-            if clause.operator == operator
-              @conditions.concat(clause.conditions)
-            else
-              @conditions << clause
-            end
+            self << clause
           end
-          @conditions.uniq!
-         end
+        end
       end
     end
 
     def terminal?
-      @operator.nil?
+      operator.nil?
+    end
+
+    def <<(clause)
+      raise 'cannot append conditions to a terminal' if terminal?
+      
+      clause = self.class.new(clause) 
+      if clause.operator == operator
+        @conditions.concat(clause.conditions)
+      else
+        @conditions << clause
+      end
+      @conditions.uniq!
     end
 
     def ~

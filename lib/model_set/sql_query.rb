@@ -1,12 +1,12 @@
 class ModelSet
-  class SQLQuery < ConditionsQuery
-    include SQLMethods 
+  class SQLQuery < SQLBaseQuery
+    include Conditioned
 
-    def anchor!(query, opts = {})
+    def anchor!(query)
       if query.respond_to?(:sql)
-        sql = "#{id_field_with_prefix} IN (#{ query.sql(opts) })"
+        sql = "#{id_field_with_prefix} IN (#{query.sql})"
       else
-        sql = ids_clause( query.ids(opts) )
+        sql = ids_clause(query.ids)
       end
       add_conditions!(sql)
     end
@@ -26,7 +26,8 @@ class ModelSet
         @joins << sanitize(join)
       end
       @joins.uniq!
-      self
+
+      clear_cache!
     end
 
     def in!(ids, field = id_field_with_prefix)
@@ -36,15 +37,15 @@ class ModelSet
     def order_by!(order, joins = nil)
       @sort_order = order
       @sort_joins = joins
-      self
+      clear_cache!
     end
   
-    def sql(opts = {})
-      "#{select_clause} #{from_clause} #{order_clause} #{limit_clause(opts)}"
+    def sql
+      "#{select_clause} #{from_clause} #{order_clause} #{limit_clause}"
     end
 
     def count
-      aggregate("COUNT(DISTINCT #{id_field_with_prefix})").to_i
+      @count ||= limit ? aggregate("COUNT(DISTINCT #{id_field_with_prefix})").to_i : size
     end
     
   private
