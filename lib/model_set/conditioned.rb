@@ -9,7 +9,7 @@ class ModelSet
 
       # Sanitize conditions.
       conditions.collect! do |condition|
-        condition.kind_of?(Conditions) ? condition : Conditions.new(sanitize(condition))
+        condition.kind_of?(Conditions) ? condition : Conditions.new( sanitize_condition(condition) )
       end
 
       if operator == :not
@@ -28,12 +28,6 @@ class ModelSet
       raise 'cannot invert without conditions' if @conditions.nil?
       @conditions = ~@conditions
       clear_cache!
-    end
-    
-  private
-
-    def sanitize(clause)
-      clause
     end
   end
 end

@@ -1,6 +1,5 @@
 require 'test/unit'
 require File.dirname(__FILE__) + '/../lib/model_set'
-require File.dirname(__FILE__) + '/../lib/model_set_solr'
 
 require 'pp'
 require 'model_factory'

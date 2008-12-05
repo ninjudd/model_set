@@ -23,7 +23,7 @@ class ModelSet
       @joins ||= []
 
       joins.each do |join|
-        @joins << sanitize(join)
+        @joins << sanitize_condition(join)
       end
       @joins.uniq!
 

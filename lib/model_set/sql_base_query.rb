@@ -23,7 +23,7 @@ class ModelSet
       model_class.connection
     end
     
-    def sanitize(condition)
+    def sanitize_condition(condition)
       ActiveRecord::Base.send(:sanitize_sql, condition)
     end
     

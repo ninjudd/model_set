@@ -68,5 +68,9 @@ class ModelSet
       field ||= 'pk_i'
       "#{field}:(#{ids.join(' OR ')})"
     end
+
+    def sanitize_condition(condition)
+      condition
+    end
   end
 end

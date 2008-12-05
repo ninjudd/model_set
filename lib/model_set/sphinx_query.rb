@@ -112,7 +112,7 @@ private
     raise 'in_query not supported in Sphinx'
   end
 
-  def sanitize(query)
-    query
+  def sanitize_conditions(conditions)
+    conditions
   end
 end

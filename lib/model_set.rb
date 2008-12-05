@@ -240,7 +240,7 @@ class ModelSet
 
   def any?
     return super if block_given?
-
+    return true if query.nil?
     size > 0
   end
 
@@ -280,6 +280,8 @@ class ModelSet
   end
 
   def anchor!(type = :set)
+    return unless type
+
     query_class = query_class(type)
     if not query.kind_of?(query_class)
       self.query = query_class.new(self)
@@ -291,10 +293,14 @@ class ModelSet
     not @limit.nil?
   end
 
+  def default_query_type
+    :sql
+  end
+
   [:add_conditions!, :add_joins!, :in!, :invert!, :order_by!].each do |method_name|
     define_method(method_name) do |*args|
-      # Use :sql as the default query engine.
-      query_type = extract_opt(:query_type, args) || :sql
+      # Use the default query engine.
+      query_type = extract_opt(:query_type, args) || default_query_type
       anchor!(query_type)
 
       query.send(method_name, *args)
@@ -306,7 +312,7 @@ class ModelSet
     define_method(method_name) do |*args|
       # Don't change the query engine by default
       query_type = extract_opt(:query_type, args)
-      anchor!(query_type) if query_type
+      anchor!(query_type)
 
       query.send(method_name, *args)
       self
@@ -412,9 +418,12 @@ class ModelSet
     new(query)
   end
 
-  def self.constructor(filter_name)
+  def self.constructor(filter_name, opts = nil)
     (class << self; self; end).module_eval do
       define_method filter_name do |*args|
+        if opts
+          args.last.kind_of?(Hash) ? args.last.reverse_merge!(opts) : args << opts
+        end
         self.all.send("#{filter_name}!", *args)
       end
     end

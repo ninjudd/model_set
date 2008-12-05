@@ -21,13 +21,12 @@ class ModelSet
     end
 
     def initialize(*args)
-      if args.size == 1
+      if args.size == 1 and not args.first.kind_of?(Symbol)
         # Terminal.
         @conditions = args
       else
         @operator = args.shift
         raise "invalid operator :#{operator}" unless [:and, :or, :not].include?(operator)
-        raise "empty conditions not permitted" if args.empty?
 
         if operator == :not
           raise "unary operator :not cannot have multiple conditions" if arg.size > 1
