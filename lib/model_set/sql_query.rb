@@ -55,7 +55,7 @@ class ModelSet
     end
         
     def from_clause
-      "FROM #{table_name} #{join_clause} WHERE #{conditions_clause}"
+      "FROM #{table_name} #{join_clause} WHERE #{conditions.to_s}"
     end
     
     def order_clause
@@ -63,11 +63,7 @@ class ModelSet
       # Prevent SQL injection attacks.
       "ORDER BY #{@sort_order.gsub(/[^\w_, \.\(\)]/, '')}"
     end
-    
-    def conditions_clause
-      conditions.to_s
-    end
-    
+        
     def join_clause
       return unless @joins or @sort_joins
       joins = []

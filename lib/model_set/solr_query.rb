@@ -26,7 +26,7 @@ class ModelSet
   private
 
     def fetch_results
-      query = "#{conditions_clause};#{order_clause}"
+      query = "#{conditions.to_s};#{order_clause}"
       
       RAILS_DEFAULT_LOGGER.c_debug("SOLR QUERY: #{query}")
       
