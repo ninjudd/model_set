@@ -55,7 +55,7 @@ class ModelSet
     attr_reader :set_class
     delegate :id_field, :table_name, :id_field_with_prefix, :model_class, :to => :set_class
 
-    attr_reader :limit
+    attr_reader :limit, :sort_order
 
     def offset
       if @limit

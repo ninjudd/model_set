@@ -253,7 +253,8 @@ class ModelSet
     self
   end
 
-  def ids=(model_ids)    
+  def ids=(model_ids)
+    model_ids = model_ids.collect {|id| id.to_i}
     self.query = SetQuery.new(self.class)
     query.add!(model_ids)
     self
