@@ -29,7 +29,7 @@ class ModelSet
         raise "invalid operator :#{operator}" unless [:and, :or, :not].include?(operator)
 
         if operator == :not
-          raise "unary operator :not cannot have multiple conditions" if arg.size > 1
+          raise "unary operator :not cannot have multiple conditions" if args.size > 1
           @conditions = [self.class.new(args.first)] 
         else
           # Compact the conditions if possible.

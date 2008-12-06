@@ -26,7 +26,7 @@ class ModelSet
   private
 
     def fetch_results
-      query = "#{conditions.to_s};#{order_clause}"
+      query = "#{conditions.to_s};#{@sort_order.to_s}"
       
       RAILS_DEFAULT_LOGGER.c_debug("SOLR QUERY: #{query}")
       
@@ -57,10 +57,6 @@ class ModelSet
       @count = resp['response']['numFound']
       @ids   = resp['response']['docs'].collect {|doc| doc['pk_i'].to_i}.to_ordered_set
       @size  = @ids.size
-    end
-
-    def order_clause
-      @sort_order.to_s
     end
 
     def ids_clause(ids, field = nil)

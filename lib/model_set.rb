@@ -424,7 +424,7 @@ class ModelSet
     (class << self; self; end).module_eval do
       define_method filter_name do |*args|
         if opts
-          args.last.kind_of?(Hash) ? args.last.reverse_merge!(opts) : args << opts
+          args.last.kind_of?(Hash) ? args.last.reverse_merge!(opts.clone) : args << opts.clone
         end
         self.all.send("#{filter_name}!", *args)
       end
