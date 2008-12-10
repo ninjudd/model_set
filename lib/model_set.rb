@@ -302,7 +302,7 @@ class ModelSet
   [:add_conditions!, :add_joins!, :in!, :invert!, :order_by!].each do |method_name|
     clone_method method_name
     define_method(method_name) do |*args|
-      # Use the default query engine.
+      # Use the default query engine if none is specified.
       anchor!( extract_opt(:query_type, args) || default_query_type )
 
       query.send(method_name, *args)
