@@ -12,6 +12,8 @@ require 'model_set/conditioned'
 require 'model_set/sql_base_query'
 require 'model_set/sql_query'
 require 'model_set/raw_sql_query'
+require 'model_set/solr_query'
+require 'model_set/sphinx_query'
 
 class ModelSet
   include Enumerable
@@ -240,7 +242,7 @@ class ModelSet
 
   def any?
     return super if block_given?
-    return true if query.nil?
+    return true  if query.nil?
     size > 0
   end
 
@@ -268,7 +270,7 @@ class ModelSet
     :set    => SetQuery,
     :sql    => SQLQuery,
     :solr   => SolrQuery,
-#    :sphinx => SphinxQuery,
+    :sphinx => SphinxQuery,
   } if not defined?(QUERY_TYPES)
 
   attr_reader :query
@@ -283,7 +285,6 @@ class ModelSet
 
   def anchor!(type = default_query_type)
     return unless type
-
     query_class = query_class(type)
     if not query_type?(query_class)
       self.query = query_class.new(self)

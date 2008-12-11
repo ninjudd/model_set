@@ -51,10 +51,10 @@ class ModelSet
 
     def fetch_results
       opts = {
-        :query       => @conditions.join
-        :filters     => @filters,
+        :query       => @conditions.join,
         :class_names => model_name,
       }
+      opts[:filters] = @filters if @filters
 
       if @sort_order
         opts[:sort_mode], opts[:sort_by] = @sort_order
