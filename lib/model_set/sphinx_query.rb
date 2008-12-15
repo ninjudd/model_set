@@ -51,7 +51,7 @@ class ModelSet
 
     def fetch_results
       opts = {
-        :query       => @conditions.join,
+        :raw_query   => @conditions.join(' '),
         :class_names => model_name,
       }
       opts[:filters] = @filters if @filters
