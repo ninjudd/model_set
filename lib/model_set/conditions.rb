@@ -77,7 +77,7 @@ class ModelSet
       return conditions.first if terminal?
 
       condition_strings = conditions.collect do |condition|
-        "(#{condition.to_s})"
+        condition.operator == :not ? condition.to_s : "(#{condition.to_s})"
       end.sort_by {|s| s.size}
 
       case operator
