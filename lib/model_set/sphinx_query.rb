@@ -5,7 +5,7 @@ class ModelSet
     attr_reader :conditions, :filters
 
     def anchor!(query)
-      add_filters!( id_field => query.ids )
+      add_filters!( id_field => query.ids.to_a )
     end    
 
     def add_filters!(filters)
@@ -51,7 +51,7 @@ class ModelSet
 
     def fetch_results
       opts = {
-        :raw_query   => @conditions.join(' '),
+        :raw_query   => conditions_clause,
         :class_names => model_name,
       }
       opts[:filters] = @filters if @filters
@@ -67,21 +67,31 @@ class ModelSet
         opts[:per_page] = MAX_SPHINX_RESULTS
       end
 
-      RAILS_DEFAULT_LOGGER.c_debug("SPHINX SEARCH: #{opts.inspect}")
-      search = Ultrasphinx::Search.new(opts)
-
-      begin
-        search.run(false) # only fetch ids
-      rescue Exception => e
-        RAILS_DEFAULT_LOGGER.info("SPHINX ERROR: exception: #{e.message}")
-        RAILS_DEFAULT_LOGGER.info("SPHINX ERROR: params: #{opts.inspect}")
-        # RAILS_DEFAULT_LOGGER.info("SPHINX ERROR: backtrace: #{e.backtrace}")
-        raise
-      end
+      if opts[:filters] and opts[:filters][id_field] and opts[:filters][id_field].empty?
+        @count = 0
+        @size  = 0
+        @ids   = []
+      else
+        RAILS_DEFAULT_LOGGER.c_debug("SPHINX SEARCH: #{opts.inspect}")
+        search = Ultrasphinx::Search.new(opts)
         
-      @count = search.total_entries
-      @ids   = search.results.collect {|model_name, id| id.to_i}.to_ordered_set
-      @size  = search.size
+        begin
+          search.run(false) # only fetch ids
+        rescue Exception => e
+          RAILS_DEFAULT_LOGGER.info("SPHINX ERROR: exception: #{e.message}")
+          RAILS_DEFAULT_LOGGER.info("SPHINX ERROR: params: #{opts.inspect}")
+          # RAILS_DEFAULT_LOGGER.info("SPHINX ERROR: backtrace: #{e.backtrace}")
+          raise
+        end
+        
+        @count = search.total_entries
+        @size  = search.size
+        @ids   = search.results.collect {|model_name, id| id.to_i}.to_ordered_set
+      end
+    end
+    
+    def conditions_clause
+      @conditions ? @conditions.join(' ') : ''
     end
   end
 end
