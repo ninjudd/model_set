@@ -69,5 +69,44 @@ class ModelSet
       end
     end
 
+    def before_query(*args)
+      proc = self.class.before_query
+      proc.bind(self).call(*args) if proc
+    end
+    
+    def self.before_query(&block)
+      if block
+        @before_query = block
+      else
+        @before_query
+      end
+    end
+
+    def on_exception(*args)
+      proc = self.class.on_exception
+      proc ? proc.bind(self).call(*args) : raise(args.first)
+    end
+
+    def self.on_exception(&block)
+      if block
+        @on_exception = block
+      else
+        @on_exception
+      end
+    end
+
+    def after_query(*args)
+      proc = self.class.after_query
+      proc.bind(self).call(*args) if proc
+    end
+
+    def self.after_query(*args, &block)
+      if block
+        @after_query = block
+      else
+        @after_query
+      end
+    end
+
   end
 end

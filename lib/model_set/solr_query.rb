@@ -28,8 +28,6 @@ class ModelSet
     def fetch_results
       query = "#{conditions.to_s};#{@sort_order.to_s}"
       
-      RAILS_DEFAULT_LOGGER.c_debug("SOLR QUERY: #{query}")
-      
       solr_params = []
       solr_params << "q=#{ ERB::Util::url_encode(query) }"
       solr_params << "wt=ruby"
@@ -43,16 +41,16 @@ class ModelSet
       end
       
       solr_params = solr_params.join('&')
+      before_query(solr_params)
       
       # Catch any errors when calling solr so we can log the params.
       begin
         resp = eval ActsAsSolr::Post.execute(solr_params)
       rescue Exception => e
-        RAILS_DEFAULT_LOGGER.info("SOLR ERROR: exception: #{e.message}")
-        RAILS_DEFAULT_LOGGER.info("SOLR ERROR: solr_params: #{solr_params}")
-        # RAILS_DEFAULT_LOGGER.info("SOLR ERROR: backtrace: #{e.backtrace}")
-        raise
+        on_exception(e, solr_params)
       end
+
+      after_query(solr_params)
       
       @count = resp['response']['numFound']
       @ids   = resp['response']['docs'].collect {|doc| doc['pk_i'].to_i}.to_ordered_set

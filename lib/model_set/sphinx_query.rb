@@ -72,21 +72,20 @@ class ModelSet
         @size  = 0
         @ids   = []
       else
-        RAILS_DEFAULT_LOGGER.c_debug("SPHINX SEARCH: #{opts.inspect}")
+        before_query(opts)
         search = Ultrasphinx::Search.new(opts)
         
         begin
           search.run(false) # only fetch ids
         rescue Exception => e
-          RAILS_DEFAULT_LOGGER.info("SPHINX ERROR: exception: #{e.message}")
-          RAILS_DEFAULT_LOGGER.info("SPHINX ERROR: params: #{opts.inspect}")
-          # RAILS_DEFAULT_LOGGER.info("SPHINX ERROR: backtrace: #{e.backtrace}")
-          raise
+          on_exception(e, opts)
         end
         
         @count = search.total_entries
         @size  = search.size
         @ids   = search.results.collect {|model_name, id| id.to_i}.to_ordered_set
+        
+        after_query(opts)
       end
     end
     
