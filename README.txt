@@ -40,4 +40,4 @@ set3.ids
 
 == LICENSE:
 
-Copyright (c) 2008 Jusin Balthrop, Geni.com; Published under The MIT License, see License.txt
+Copyright (c) 2008 Justin Balthrop, Geni.com; Published under The MIT License, see License.txt
