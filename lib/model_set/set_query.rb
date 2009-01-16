@@ -1,6 +1,6 @@
 class ModelSet
   class SetQuery < Query
-    delegate :add!, :subtract!, :intersect!, :reorder!, :to => :set
+    delegate :add!, :unshift!, :subtract!, :intersect!, :reorder!, :to => :set
 
     def anchor!(query)
       @set = query.ids.to_ordered_set
