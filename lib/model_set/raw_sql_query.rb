@@ -1,10 +1,10 @@
 class ModelSet
   class RawSQLQuery < SQLBaseQuery
     def sql=(sql)
+      @sql = sanitize_condition(sql)
       ['LIMIT', 'OFFSET'].each do |term|
-        raise "#{term} not permitted in raw sql" if sql.match(/ #{term} \d+/i)
+        raise "#{term} not permitted in raw sql" if @sql.match(/ #{term} \d+/i)
       end
-      @sql = sql
     end
     
     def sql
