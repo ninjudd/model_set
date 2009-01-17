@@ -112,7 +112,13 @@ class ModelSet
     
     def filter_values(values)
       Array(values).collect do |value|
-        value.kind_of?(Date) ? value.to_time.to_i : value.to_i
+        case value
+        when Date       : value.to_time.to_i
+        when TrueClass  : 1
+        when FalseClass : 0
+        else
+          value.to_i
+        end
       end
     end
 
