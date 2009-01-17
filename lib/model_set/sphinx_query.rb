@@ -32,7 +32,7 @@ class ModelSet
 
     def order_by!(field, mode = :ascending)
       raise "invalid mode: :#{mode}" unless SORT_MODES[mode]
-      @sort_order = [SORT_MODES[mode], field]
+      @sort_order = [SORT_MODES[mode], field.to_s]
       clear_cache!
     end
 
@@ -108,7 +108,7 @@ class ModelSet
     end
     
     def filter_values(values)
-      Array(values).each do |value|
+      Array(values).collect do |value|
         value.kind_of?(Date) ? value.to_time.to_i : value.to_i
       end
     end
