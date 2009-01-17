@@ -2,6 +2,8 @@ class ModelSet
   class SphinxQuery < Query
     MAX_SPHINX_RESULTS = 1000
 
+    class SphinxError < StandardError; end
+
     attr_reader :conditions, :filters
 
     def anchor!(query)
@@ -95,6 +97,7 @@ class ModelSet
 
         begin
           response = search.Query(opts[:query])
+          raise SphinxError, search.GetLastError unless response
         rescue Exception => e
           on_exception(e, opts)
         end
