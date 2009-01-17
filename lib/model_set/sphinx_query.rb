@@ -64,7 +64,7 @@ class ModelSet
         search = Sphinx::Client.new
         
         # Basic options
-        search.SetServer(server_host, server_port)
+        search.SetServer(self.class.server_host, self.class.server_port)
 
         search.SetMatchMode(Sphinx::Client::SPH_MATCH_EXTENDED2)
         if limit
@@ -75,7 +75,7 @@ class ModelSet
 
         search.SetSortMode(*@sort_order) if @sort_order
 
-        search.SetFilter('class_id', sphinx_class_id)
+        search.SetFilter('class_id', model_class.class_id) if model_class.respond_to?(:class_id)
 
         @filters and @filters.each do |field, value|
           exclude = defined?(AntiObject) && value.kind_of?(AntiObject)
@@ -122,17 +122,8 @@ class ModelSet
       end
     end
 
-    def sphinx_class_id
-      Ultrasphinx::Search::MODELS_TO_IDS[model_class.to_s] || 
-      Ultrasphinx::Search::MODELS_TO_IDS[model_class.base_class.to_s]
-    end
-
-    def server_host
-      Ultrasphinx::CLIENT_SETTINGS['server_host']
-    end
-    
-    def server_port
-      Ultrasphinx::CLIENT_SETTINGS['server_port']
+    class << self
+      attr_accessor :server_host, :server_port
     end
 
     def conditions_clause
