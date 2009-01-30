@@ -242,7 +242,7 @@ class ModelSet
 
   def any?
     return super if block_given?
-    return true  if query.nil?
+    return false if query.nil?
     size > 0
   end
 
