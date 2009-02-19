@@ -195,6 +195,33 @@ class ModelSet
     self
   end
 
+  def reject_raw(&block)
+    self.clone.reject_raw!(&block)
+  end
+
+  def reject_raw!(&block)
+    anchor!(:raw)
+    query.reject!(&block)
+  end
+
+  def select_raw(&block)
+    self.clone.select_raw!(&block)
+  end
+
+  def select_raw!(&block)
+    anchor!(:raw)
+    query.select!(&block)
+  end
+
+  def sort_by_raw(&block)
+    self.clone.sort_by_raw!(&block)
+  end
+
+  def sort_by_raw!(&block)
+    anchor!(:raw)
+    query.sort_by!(&block)
+  end
+
   def sort(&block)
     self.clone.sort!(&block)
   end
@@ -250,6 +277,22 @@ class ModelSet
     not any?
   end
 
+  def current_page # for will_paginate
+    query.page
+  end
+  
+  def per_page # for will_paginate
+    query.limit
+  end
+
+  def total_entries # for will_paginate
+    query.count
+  end
+
+  def total_pages # for will_paginate
+    query.pages
+  end
+
   def empty!
     self.ids = []
     self
@@ -271,6 +314,7 @@ class ModelSet
     :sql    => SQLQuery,
     :solr   => SolrQuery,
     :sphinx => SphinxQuery,
+    :raw    => RawQuery,
   } if not defined?(QUERY_TYPES)
 
   attr_reader :query
@@ -283,11 +327,11 @@ class ModelSet
     query_class(type) == query_class
   end
 
-  def anchor!(type = default_query_type)
+  def anchor!(type = default_query_type, *args)
     return unless type
     query_class = query_class(type)
     if not query_type?(query_class)
-      self.query = query_class.new(self)
+      self.query = query_class.new(self, *args)
     end
     self
   end

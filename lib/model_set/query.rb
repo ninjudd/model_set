@@ -58,15 +58,19 @@ class ModelSet
     attr_reader :limit, :sort_order
 
     def offset
-      if @limit
-        @offset ||= @page ? (@page - 1) * @limit : 0
+      if limit
+        @offset ||= @page ? (@page - 1) * limit : 0
       end
     end
 
     def page
-      if @limit
-        @page ||= @offset ? (@offset / @limit) : 1
+      if limit
+        @page ||= @offset ? (@offset / limit) : 1
       end
+    end
+
+    def pages
+      limit ? (1.0 * count / limit).ceil : 1
     end
 
     def before_query(*args)
