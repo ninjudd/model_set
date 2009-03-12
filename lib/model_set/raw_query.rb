@@ -20,7 +20,7 @@ class ModelSet
 
     def ids
       if limit
-        records[offset, limit].collect {|r| r['id'].to_i}
+        (records[offset, limit] || []).collect {|r| r['id'].to_i}
       else
         records.collect {|r| r['id'].to_i}
       end
