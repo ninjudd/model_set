@@ -17,10 +17,18 @@ class ModelSet
     end
 
     def add_conditions!(conditions)
-      @conditions ||= []
-      @conditions << conditions
-      @conditions.uniq!
-      clear_cache!
+      if conditions.kind_of?(Hash)
+        conditions.each do |field, value|
+          next if value.nil?
+          field = field.join(',') if field.kind_of?(Array)
+          add_conditions!("@(#{field}) #{value}")
+        end
+      else
+        @conditions ||= []
+        @conditions << conditions
+        @conditions.uniq!
+        clear_cache!
+      end
     end
 
     SORT_MODES = {
