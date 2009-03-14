@@ -489,6 +489,14 @@ class ModelSet
     end
   end
 
+  def self.query_model_class(query_model_class = nil)
+    if query_model_class.nil?
+      @query_model_class ||= model_class
+    else
+      @query_model_class = query_model_class
+    end
+  end
+
   def self.model_name
     model_class.name
   end
@@ -518,7 +526,7 @@ class ModelSet
   end
 
   # Define instance methods based on class methods.
-  [:model_class, :model_name, :table_name, :id_field, :id_field_with_prefix].each do |method|
+  [:model_class, :query_model_class, :model_name, :table_name, :id_field, :id_field_with_prefix].each do |method|
     define_method(method) do |*args|
       self.class.send(method, *args)
     end

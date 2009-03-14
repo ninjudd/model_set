@@ -56,25 +56,26 @@ class ModelSet
   private
 
     def fetch_results
-      if @filters and @filters[id_field] and @filters[id_field].empty?
+      if @conditions.nil? or (@filters and @filters[id_field] and @filters[id_field].empty?)
         @count = 0
         @size  = 0
         @ids   = []
       else
-        search = Sphinx::Client.new
-        
-        # Basic options
-        search.SetServer(self.class.server_host, self.class.server_port)
+        opts = {
+          :filters => @filters,
+          :query   => conditions_clause,
+        }
+        before_query(opts)
 
+        search = Sphinx::Client.new
+        search.SetServer(self.class.server_host, self.class.server_port)
         search.SetMatchMode(Sphinx::Client::SPH_MATCH_EXTENDED2)
         if limit
           search.SetLimits(offset, limit, offset + limit)
         else
           search.SetLimits(0, MAX_SPHINX_RESULTS, MAX_SPHINX_RESULTS)
         end
-
         search.SetSortMode(*@sort_order) if @sort_order
-
         search.SetFilter('class_id', model_class.class_id) if model_class.respond_to?(:class_id)
 
         @filters and @filters.each do |field, value|
@@ -88,12 +89,6 @@ class ModelSet
             search.SetFilter(field.to_s, filter_values(value), exclude)
           end
         end
-
-        opts = {
-          :query   => conditions_clause,
-          :filters => @filters,
-        }
-        before_query(opts)
 
         begin
           response = search.Query(opts[:query])

@@ -53,7 +53,19 @@ class ModelSet
     end
 
     attr_reader :set_class
-    delegate :id_field, :table_name, :id_field_with_prefix, :model_class, :model_name, :to => :set_class
+    delegate :id_field, :id_field_with_prefix, :to => :set_class
+
+    def model_class
+      set_class.query_model_class
+    end
+
+    def model_name
+      model_class.name
+    end
+
+    def table_name
+      model_class.table_name
+    end
 
     attr_reader :limit, :sort_order
 
