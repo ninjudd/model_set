@@ -31,6 +31,14 @@ class ModelSet
       end
     end
 
+    def index
+      @index ||= '*'
+    end
+
+    def use_index!(index)
+      @index = index
+    end
+
     SORT_MODES = {
       :relevance  => Sphinx::Client::SPH_SORT_RELEVANCE,
       :descending => Sphinx::Client::SPH_SORT_ATTR_DESC,
@@ -99,7 +107,7 @@ class ModelSet
         end
 
         begin
-          response = search.Query(opts[:query])
+          response = search.Query(opts[:query], index)
           raise SphinxError, search.GetLastError unless response
         rescue Exception => e
           on_exception(e, opts)
