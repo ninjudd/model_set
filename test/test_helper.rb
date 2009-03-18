@@ -1,39 +1,18 @@
 require 'test/unit'
+
+$:.unshift(File.dirname(__FILE__) + '/../../deep_clonable/lib')
+
 require File.dirname(__FILE__) + '/../lib/model_set'
 
 require 'pp'
-require 'model_factory'
 
-class Robot
-  attr_writer :id
-  attr_accessor :name, :classification
-
-  def initialize(opts = {})
-    @id             = opts[:id]
-    @name           = opts[:name]
-    @classification = opts[:classification]
-  end
-  
-  def id
-    @id
-  end
-  
-  def self.table_name
-    'robots'
-  end
-end
-
-class Factory
-  extend ModelFactory
-
-  default Robot, {
-    :name           => 'Rob',
-    :classification => :unknown,
-  }
-end
-
-class RobotSet < ModelSet
-end
+ActiveRecord::Base.establish_connection(
+  :adapter  => "postgresql",
+  :host     => "localhost",
+  :username => "postgres",
+  :password => "",
+  :database => "model_set_test"
+)
 
 class << Test::Unit::TestCase
   def test(name, &block)
