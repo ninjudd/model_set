@@ -95,6 +95,8 @@ class ModelSet
         search.SetFilter('class_id', model_class.class_id) if model_class.respond_to?(:class_id)
 
         @filters and @filters.each do |field, value|
+          next if value.nil?
+
           exclude = defined?(AntiObject) && value.kind_of?(AntiObject)
           value = ~value if exclude
 
