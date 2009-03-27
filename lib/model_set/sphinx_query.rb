@@ -1,3 +1,5 @@
+require File.dirname(__FILE__) + '/../../vendor/sphinx_client/lib/sphinx'
+
 class ModelSet
   class SphinxQuery < Query
     MAX_SPHINX_RESULTS = 1000

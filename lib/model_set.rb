@@ -7,6 +7,7 @@ $:.unshift(File.dirname(__FILE__))
 require 'multi_set'
 require 'model_set/query'
 require 'model_set/set_query'
+require 'model_set/raw_query'
 require 'model_set/conditions'
 require 'model_set/conditioned'
 require 'model_set/sql_base_query'
