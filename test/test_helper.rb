@@ -1,10 +1,16 @@
+require 'rubygems'
 require 'test/unit'
+require 'shoulda'
+require 'mocha'
 
-$:.unshift(File.dirname(__FILE__) + '/../../deep_clonable/lib')
+$LOAD_PATH.unshift File.dirname(__FILE__) + "/../lib"
+['deep_clonable', 'ordered_set'].each do |dir|
+  $LOAD_PATH.unshift File.dirname(__FILE__) + "/../../#{dir}/lib"
+end
+require 'model_set'
 
-require File.dirname(__FILE__) + '/../lib/model_set'
-
-require 'pp'
+class Test::Unit::TestCase
+end
 
 ActiveRecord::Base.establish_connection(
   :adapter  => "postgresql",
@@ -13,11 +19,5 @@ ActiveRecord::Base.establish_connection(
   :password => "",
   :database => "model_set_test"
 )
-
-class << Test::Unit::TestCase
-  def test(name, &block)
-    test_name = "test_#{name.gsub(/[\s\W]/,'_')}"
-    raise ArgumentError, "#{test_name} is already defined" if self.instance_methods.include? test_name
-    define_method test_name, &block
-  end
-end
+ActiveRecord::Migration.verbose = false
+ActiveRecord::Base.connection.client_min_messages = 'panic'

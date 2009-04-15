@@ -7,11 +7,7 @@ the Solr search engine through a subclass, but I plan to abstract this out into 
 engine" class that will support SQL, Solr, Sphinx, and eventually, other query methods
 (possibly raw RecordCache hashes and other search engines).
 
-== INSTALL:
-
-  sudo gem install model_set
-
-== USAGE: 
+== Usage:
 
 class RobotSet < ModelSet
 end
@@ -32,12 +28,12 @@ set3 << Robot.find(5)
 set3.ids
 # => [3,4,5]
 
-== REQUIREMENTS:
+== Install:
 
- * deep_clonable
- * ordered_set
- * active_record
+  sudo gem install ninjudd-deep_clonable -s http://gems.github.com
+  sudo gem install ninjudd-ordered_set -s http://gems.github.com
+  sudo gem install ninjudd-model_set -s http://gems.github.com
 
-== LICENSE:
+== License:
 
-Copyright (c) 2008 Justin Balthrop, Geni.com; Published under The MIT License, see License.txt
+Copyright (c) 2009 Justin Balthrop, Geni.com; Published under The MIT License, see LICENSE
