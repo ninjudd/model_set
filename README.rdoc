@@ -9,24 +9,24 @@ engine" class that will support SQL, Solr, Sphinx, and eventually, other query m
 
 == Usage:
 
-class RobotSet < ModelSet
-end
-
-set1 = RobotSet.new([1,2,3,4]) # doesn't fetch the models
-
-set1.each do |model| # fetches all 
-  # do something
-end
-
-set2 = RobotSet.new([1,2])
-
-set3 = set1 - set2
-set3.ids
-# => [3,4]
-
-set3 << Robot.find(5)
-set3.ids
-# => [3,4,5]
+  class RobotSet < ModelSet
+  end
+  
+  set1 = RobotSet.new([1,2,3,4]) # doesn't fetch the models
+  
+  set1.each do |model| # fetches all 
+    # do something
+  end
+  
+  set2 = RobotSet.new([1,2])
+  
+  set3 = set1 - set2
+  set3.ids
+  # => [3,4]
+  
+  set3 << Robot.find(5)
+  set3.ids
+  # => [3,4,5]
 
 == Install:
 
