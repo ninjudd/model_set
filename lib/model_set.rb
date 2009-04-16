@@ -337,10 +337,6 @@ class ModelSet
     self
   end
   
-  def limit?
-    not @limit.nil?
-  end
-
   def default_query_type
     :sql
   end
@@ -424,7 +420,6 @@ class ModelSet
   def clone_fields
     # Do a deep copy of the fields we want to modify.
     @query             = @query.clone             if @query
-    @model_ids         = @model_ids.clone         if @model_ids
     @add_fields        = @add_fields.clone        if @add_fields
     @included_models   = @included_models.clone   if @included_models
   end
@@ -531,6 +526,14 @@ class ModelSet
     define_method(method) do |*args|
       self.class.send(method, *args)
     end
+  end
+
+  def marshal_dump
+    [ @query, @add_fields, @included_models ]
+  end
+
+  def marshal_load(fields)
+    @query, @add_fields, @included_models = fields
   end
 
 protected
