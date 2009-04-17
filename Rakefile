@@ -11,6 +11,7 @@ begin
     s.homepage = "http://github.com/ninjudd/model_set"
     s.description = "Easy manipulation of sets of ActiveRecord models"
     s.authors = ["Justin Balthrop"]
+    s.files =  FileList['README*', 'VERSION.yml', 'LICENSE', 'lib/**/*.rb', 'test/**/*', 'vendor/**/*'].to_a
   end
 rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
