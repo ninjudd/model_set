@@ -8,7 +8,6 @@ Gem::Specification.new do |s|
   s.description = %q{Easy manipulation of sets of ActiveRecord models}
   s.email = %q{code@justinbalthrop.com}
   s.files = ["README.rdoc", "VERSION.yml", "lib/model_set", "lib/model_set/conditioned.rb", "lib/model_set/conditions.rb", "lib/model_set/query.rb", "lib/model_set/raw_query.rb", "lib/model_set/raw_sql_query.rb", "lib/model_set/set_query.rb", "lib/model_set/solr_query.rb", "lib/model_set/sphinx_query.rb", "lib/model_set/sql_base_query.rb", "lib/model_set/sql_query.rb", "lib/model_set.rb", "lib/multi_set.rb", "test/model_set_test.rb", "test/multi_set_test.rb", "test/test_helper.rb"]
-  s.files << Dir['vendor/**/*']
   s.has_rdoc = true
   s.homepage = %q{http://github.com/ninjudd/model_set}
   s.rdoc_options = ["--inline-source", "--charset=UTF-8"]
