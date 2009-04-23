@@ -3,6 +3,7 @@ require File.dirname(__FILE__) + '/../../vendor/sphinx_client/lib/sphinx'
 class ModelSet
   class SphinxQuery < Query
     MAX_SPHINX_RESULTS = 1000
+    MAX_QUERY_TIME = 5000 # milliseconds
 
     class SphinxError < StandardError; end
 
@@ -86,6 +87,7 @@ class ModelSet
         before_query(opts)
 
         search = Sphinx::Client.new
+        search.SetMaxQueryTime(MAX_QUERY_TIME)
         search.SetServer(self.class.server_host, self.class.server_port)
         search.SetMatchMode(Sphinx::Client::SPH_MATCH_EXTENDED2)
         if limit
