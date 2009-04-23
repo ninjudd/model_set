@@ -24,6 +24,8 @@ class ModelSet
 
   MAX_CACHE_SIZE = 1000 if not defined?(MAX_CACHE_SIZE)
 
+  attr_reader :created_at
+
   def initialize(query_or_models)
     if query_or_models.kind_of?(Query)
       @query = query_or_models
@@ -33,6 +35,11 @@ class ModelSet
     elsif query_or_models
       self.ids = as_ids(query_or_models)
     end
+    @created_at = Time.now
+  end
+
+  def older_than?(duration)
+    created_at.nil? or created_at < Time.now - duration
   end
 
   def ids
@@ -529,11 +536,11 @@ class ModelSet
   end
 
   def marshal_dump
-    [ @query, @add_fields, @included_models ]
+    [ @query, @add_fields, @included_models, @created_at ]
   end
 
   def marshal_load(fields)
-    @query, @add_fields, @included_models = fields
+    @query, @add_fields, @included_models, @created_at = fields
   end
 
 protected
