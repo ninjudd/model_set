@@ -105,6 +105,29 @@ class ModelSetTest < Test::Unit::TestCase
       set = HeroSet.with_universe('Marvel')
       assert_equal [captain.id, spidey.id, ironman.id], set.ids
     end
+
+    should "order and reverse set" do
+      captain   = Hero.create(:name => 'Captain America', :universe => 'Marvel')
+      spidey    = Hero.create(:name => 'Spider Man',      :universe => 'Marvel')
+      wolverine = Hero.create(:name => 'Wolverine',       :universe => 'Marvel'  )
+      phoenix   = Hero.create(:name => 'Phoenix',         :universe => 'Marvel'  )
+      ironman   = Hero.create(:name => 'Iron Man',        :universe => 'Marvel')
+      
+      ids = [captain.id, ironman.id, phoenix.id, spidey.id, wolverine.id]
+      set = HeroSet.with_universe('Marvel')
+
+      set.order_by!('name')      
+      assert_equal ids, set.ids
+
+      set.reverse!
+      assert_equal ids.reverse, set.ids
+
+      set.order_by!('name DESC')
+      assert_equal ids.reverse, set.ids
+
+      set.reverse!
+      assert_equal ids, set.ids
+    end
   
     should "have missing ids" do
       missing_id = 5555
@@ -231,6 +254,9 @@ class ModelSetTest < Test::Unit::TestCase
       
       @bot_set.sort! {|a,b| b.name <=> a.name}
       assert_equal [@bender,@c3po,@johnny5,@r2d2,@rosie,@t1000,@small_wonder].reverse, @bot_set.to_a 
+
+      @bot_set.reverse!
+      assert_equal [@bender,@c3po,@johnny5,@r2d2,@rosie,@t1000,@small_wonder], @bot_set.to_a 
     end
     
     should "sort a set by name" do

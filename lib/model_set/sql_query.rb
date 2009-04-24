@@ -40,6 +40,21 @@ class ModelSet
       clear_cache!
     end
   
+    def reverse!
+      if @sort_order
+        @sort_order = @sort_order.split(/\s*,\s*/).collect do |sub_order|
+          if sub_order =~ / DESC$/i
+            sub_order.slice(0..-6)
+          else
+            "#{sub_order} DESC"
+          end
+        end.join(', ')
+      else
+        @sort_order = "#{id_field_with_prefix} DESC"
+      end
+      clear_cache!  
+    end
+
     def sql
       "#{select_clause} #{from_clause} #{order_clause} #{limit_clause}"
     end

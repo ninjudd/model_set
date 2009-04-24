@@ -359,11 +359,14 @@ class ModelSet
     end
   end
 
-  [:unsorted!, :limit!, :page!, :unlimited!].each do |method_name|
+  [:unsorted!, :limit!, :page!, :unlimited!, :reverse!].each do |method_name|
     clone_method method_name
     define_method(method_name) do |*args|
       # Don't change the query engine by default
       anchor!( extract_opt(:query_type, args) )
+
+      # Use the default query engine if the the current engine doesn't respond to the method.
+      anchor!(default_query_type) unless query.respond_to?(method_name)
 
       query.send(method_name, *args)
       self
