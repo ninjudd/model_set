@@ -35,7 +35,7 @@ class ModelSet
     end
 
     def order_by!(order, joins = nil)
-      @sort_order = order
+      @sort_order = order ? order.to_s : nil
       @sort_joins = joins
       clear_cache!
     end
@@ -52,7 +52,7 @@ class ModelSet
       else
         @sort_order = "#{id_field_with_prefix} DESC"
       end
-      clear_cache!  
+      clear_cache!
     end
 
     def sql
