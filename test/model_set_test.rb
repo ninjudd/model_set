@@ -116,7 +116,7 @@ class ModelSetTest < Test::Unit::TestCase
       ids = [captain.id, ironman.id, phoenix.id, spidey.id, wolverine.id]
       set = HeroSet.with_universe('Marvel')
 
-      set.order_by!('name')      
+      set.order_by!('name')
       assert_equal ids, set.ids
 
       set.reverse!
@@ -127,6 +127,13 @@ class ModelSetTest < Test::Unit::TestCase
 
       set.reverse!
       assert_equal ids, set.ids
+
+      # Make sure that a comma in a function call works.
+      set.order_by!("lower(ltrim(name, 'C'))")
+      assert_equal ids, set.ids
+
+      set.reverse!
+      assert_equal ids.reverse, set.ids
     end
   
     should "have missing ids" do
@@ -170,7 +177,6 @@ class ModelSetTest < Test::Unit::TestCase
       assert_equal SuperpowerSet, set.class
       assert_equal [invisibility.id, flying.id], set.ids
     end
-  
   
     should "allow set extensions" do
       hero = Hero.create(:name => 'Mr. Invisible')

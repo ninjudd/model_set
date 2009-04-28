@@ -34,23 +34,25 @@ class ModelSet
       add_conditions!( ids_clause(ids, field) )
     end
 
-    def order_by!(order, joins = nil)
-      @sort_order = order ? order.to_s : nil
-      @sort_joins = joins
+    def order_by!(*args)
+      opts = args.last.kind_of?(Hash) ? args.pop : {}
+
+      @sort_join  = sanitize_condition(opts[:join])
+      @sort_order = args
       clear_cache!
     end
   
     def reverse!
       if @sort_order
-        @sort_order = @sort_order.split(/\s*,\s*/).collect do |sub_order|
+        @sort_order.collect! do |sub_order|
           if sub_order =~ / DESC$/i
             sub_order.slice(0..-6)
           else
             "#{sub_order} DESC"
           end
-        end.join(', ')
+        end
       else
-        @sort_order = "#{id_field_with_prefix} DESC"
+        @sort_order = ["#{id_field_with_prefix} DESC"]
       end
       clear_cache!
     end
@@ -76,14 +78,14 @@ class ModelSet
     def order_clause
       return unless @sort_order
       # Prevent SQL injection attacks.
-      "ORDER BY #{@sort_order.gsub(/[^\w_, \.\(\)'\"]/, '')}"
+      "ORDER BY #{@sort_order.join(', ').gsub(/[^\w_, \.\(\)'\"]/, '')}"
     end
         
     def join_clause
-      return unless @joins or @sort_joins
+      return unless @joins or @sort_join
       joins = []
       joins << @joins      if @joins
-      joins << @sort_joins if @sort_joins      
+      joins << @sort_join if @sort_join
       joins.join(' ')
     end
   end
