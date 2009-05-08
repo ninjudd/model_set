@@ -50,7 +50,7 @@ class ModelSet
     ( @missing_ids || [] ).uniq
   end
 
-  [:add!, :unshift!, :subtract!, :intersect!, :reorder!].each do |action|  
+  [:add!, :unshift!, :subtract!, :intersect!, :reorder!, :reverse_reorder!].each do |action|  
     define_method(action) do |models|
       anchor!(:set)
       query.send(action, as_ids(models))
