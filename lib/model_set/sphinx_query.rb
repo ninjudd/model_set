@@ -14,8 +14,13 @@ class ModelSet
     end    
 
     def add_filters!(filters)
-      @filters ||= {}
-      @filters.merge!(filters)
+      @filters ||= []
+
+      filters.each do |key, value|
+        next if value.nil?
+        @empty = true if value.kind_of?(Array) and value.empty?
+        @filters << [key, value]
+      end
       clear_cache!
     end
 
@@ -24,6 +29,7 @@ class ModelSet
         conditions.each do |field, value|
           next if value.nil?
           field = field.join(',') if field.kind_of?(Array)
+          value = value.collect {|v| '"' + v + '"'}.join('|') if value.kind_of?(Array)
           add_conditions!("@(#{field}) #{value}")
         end
       else
@@ -75,7 +81,7 @@ class ModelSet
   private
 
     def fetch_results
-      if @conditions.nil? or (@filters and @filters[id_field] and @filters[id_field].empty?)
+      if @conditions.nil? or @empty
         @count = 0
         @size  = 0
         @ids   = []
@@ -99,8 +105,6 @@ class ModelSet
         search.SetFilter('class_id', model_class.class_id) if model_class.respond_to?(:class_id)
 
         @filters and @filters.each do |field, value|
-          next if value.nil?
-
           exclude = defined?(AntiObject) && value.kind_of?(AntiObject)
           value = ~value if exclude
 
