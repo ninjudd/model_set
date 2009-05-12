@@ -5,8 +5,6 @@ class ModelSet
     MAX_SPHINX_RESULTS = 1000
     MAX_QUERY_TIME = 5000 # milliseconds
 
-    class SphinxError < StandardError; end
-
     attr_reader :conditions, :filters
 
     def anchor!(query)
@@ -78,6 +76,13 @@ class ModelSet
       @ids
     end
 
+    class SphinxError < StandardError
+      attr_accessor :opts
+      def message
+        "#{super}: #{opts.inspect}"
+      end
+    end
+
   private
 
     def fetch_results
@@ -118,9 +123,15 @@ class ModelSet
 
         begin
           response = search.Query(opts[:query], index)
-          raise SphinxError, search.GetLastError unless response
+          unless response
+            e = SphinxError.new(search.GetLastError)
+            e.opts = opts
+            raise e
+          end
         rescue Exception => e
-          on_exception(e, opts)
+          e = SphinxError.new(e) unless e.kind_of?(SphinxError)
+          e.opts = opts
+          on_exception(e)
         end
         
         @count = response['total_found']
