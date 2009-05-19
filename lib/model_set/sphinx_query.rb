@@ -56,8 +56,12 @@ class ModelSet
     }
 
     def order_by!(field, mode = :ascending)
-      raise "invalid mode: :#{mode}" unless SORT_MODES[mode]
-      @sort_order = [SORT_MODES[mode], field.to_s]
+      if field == :relevance
+        @sort_order = [SORT_MODES[:relevance]]
+      else
+        raise "invalid mode: :#{mode}" unless SORT_MODES[mode]
+        @sort_order = [SORT_MODES[mode], field.to_s]
+      end
       clear_cache!
     end
 
@@ -106,6 +110,7 @@ class ModelSet
         else
           search.SetLimits(0, MAX_SPHINX_RESULTS, MAX_SPHINX_RESULTS)
         end
+
         search.SetSortMode(*@sort_order) if @sort_order
         search.SetFilter('class_id', model_class.class_id) if model_class.respond_to?(:class_id)
 
@@ -137,7 +142,7 @@ class ModelSet
         @count = response['total_found']
         @ids   = response['matches'].collect {|r| r['id']}.to_ordered_set
         @size  = @ids.size
-        
+
         after_query(opts)
       end
     end
