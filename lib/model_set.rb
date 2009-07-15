@@ -237,7 +237,7 @@ class ModelSet
   def sort!(&block)
     block ||= lambda {|a,b| a <=> b}
     sorted_ids = to_a.sort(&block).collect {|m| m.id}
-    model_ids.reorder!(sorted_ids)
+    reorder!(sorted_ids)
     self
   end
 
@@ -247,7 +247,7 @@ class ModelSet
 
   def sort_by!(&block)
     sorted_ids = to_a.sort_by(&block).collect {|m| m.id}
-    model_ids.reorder!(sorted_ids)
+    reorder!(sorted_ids)
     self
   end
 

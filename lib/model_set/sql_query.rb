@@ -8,9 +8,18 @@ class ModelSet
       else
         sql = ids_clause(query.ids)
       end
+      @sort_order = query.ids
       add_conditions!(sql)
     end
     
+    def ids
+      if @ids.nil?
+        @ids = fetch_id_set(sql)
+        @ids.reorder!(@sort_order) if @sort_order.kind_of?(OrderedSet)
+      end
+      @ids
+    end
+
     def aggregate(query, opts = {})
       sql = "SELECT #{query} #{from_clause}"
       sql << " LIMIT #{opts[:limit]}"       if opts[:limit]
@@ -43,7 +52,9 @@ class ModelSet
     end
   
     def reverse!
-      if @sort_order
+      if @sort_order.kind_of?(OrderedSet)
+        @sort_order.reverse!
+      elsif @sort_order
         @sort_order.collect! do |sub_order|
           if sub_order =~ / DESC$/i
             sub_order.slice(0..-6)
@@ -76,7 +87,7 @@ class ModelSet
     end
     
     def order_clause
-      return unless @sort_order
+      return if @sort_order.nil? or @sort_order.kind_of?(OrderedSet)
       # Prevent SQL injection attacks.
       "ORDER BY #{@sort_order.join(', ').gsub(/[^\w_, \.\(\)'\"]/, '')}"
     end

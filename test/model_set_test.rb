@@ -106,6 +106,20 @@ class ModelSetTest < Test::Unit::TestCase
       assert_equal [captain.id, spidey.id, ironman.id], set.ids
     end
 
+    should "maintain initial order when adding conditions" do
+      captain  = Hero.create(:name => 'Captain America', :universe => 'Marvel')
+      spidey   = Hero.create(:name => 'Spider Man',      :universe => 'Marvel')
+      batman   = Hero.create(:name => 'Batman',          :universe => 'D.C.'  )
+      superman = Hero.create(:name => 'Superman',        :universe => 'D.C.'  )
+      ironman  = Hero.create(:name => 'Iron Man',        :universe => 'Marvel')
+
+      set = HeroSet.new([ironman, captain, superman, spidey, batman])
+
+      set.add_conditions!("universe = 'Marvel'")
+
+      assert_equal [ironman.id, captain.id, spidey.id], set.ids
+    end
+
     should "order and reverse set" do
       captain   = Hero.create(:name => 'Captain America', :universe => 'Marvel')
       spidey    = Hero.create(:name => 'Spider Man',      :universe => 'Marvel')
@@ -135,7 +149,7 @@ class ModelSetTest < Test::Unit::TestCase
       set.reverse!
       assert_equal ids.reverse, set.ids
     end
-  
+
     should "have missing ids" do
       missing_id = 5555
       spidey = Hero.create(:name => 'Spider Man', :universe => 'Marvel')
