@@ -168,14 +168,17 @@ class ModelSet
     self
   end
 
-  def select(&block)
-    self.clone.select!(&block)
+  def select(limit = nil, &block)
+    self.clone.select!(limit, &block)
   end
 
-  def select!
+  def select!(limit = nil)
     filtered_ids = []
     self.each do |model|
-      filtered_ids << model.send(id_field) if yield model
+      if yield model
+        filtered_ids << model.send(id_field)
+        break if filtered_ids.size == limit
+      end
     end
     self.ids = filtered_ids
     self
@@ -379,7 +382,6 @@ class ModelSet
 
   def add_fields!(fields)
     raise 'cannot use both add_fields and include_models' if @included_models
-
     ( @add_fields ||= {} ).merge!(fields)
 
     # We have to reload the models because we are adding additional fields.
