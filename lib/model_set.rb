@@ -56,7 +56,7 @@ class ModelSet
       query.send(action, as_ids(models))
       self
     end
-  end
+  end  
 
   clone_method :+, :add!
   clone_method :-, :subtract!
@@ -67,6 +67,13 @@ class ModelSet
   alias delete subtract!
   alias without! subtract!
   clone_method :without  
+
+  clone_method :shuffle
+  def shuffle!(seed = nil)
+    anchor!(:set)
+    query.shuffle!(seed)
+    self
+  end
 
   def include?(model)
     model_id = as_id(model)
