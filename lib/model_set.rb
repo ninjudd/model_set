@@ -70,7 +70,7 @@ class ModelSet
 
   clone_method :shuffle
   def shuffle!(seed = nil)
-    anchor!(:set)
+    reanchor!(:set)
     query.shuffle!(seed)
     self
   end
@@ -348,6 +348,13 @@ class ModelSet
     if not query_type?(query_class)
       self.query = query_class.new(self, *args)
     end
+    self
+  end
+
+  def reanchor!(type = default_query_type, *args)
+    # Force anchoring even if you are already anchored to this type.
+    return unless type
+    self.query = query_class(type).new(self, *args)
     self
   end
   
