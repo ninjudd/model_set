@@ -374,6 +374,7 @@ class ModelSet
 
       # Use the default query engine if the the current engine doesn't respond to the method.
       anchor!(default_query_type) unless query.respond_to?(method_name)
+      anchor!(:set) unless query.limit_enabled?
 
       query.send(method_name, *args)
       self

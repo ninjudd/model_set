@@ -27,6 +27,10 @@ class ModelSet
       clear_limited_cache!
     end
 
+    def limit_enabled?
+      true # Override if limit is not possible for subclass.
+    end
+
     def limit!(limit, offset = nil)
       @limit  = limit  ? limit.to_i  : nil
       @offset = offset ? offset.to_i : nil
