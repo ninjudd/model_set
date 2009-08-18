@@ -481,7 +481,7 @@ class ModelSet
   end
 
   def self.find_by_sql(sql)
-    query = RawSQLQuery.new
+    query = RawSQLQuery.new(self)
     query.sql = sql
     new(query)
   end

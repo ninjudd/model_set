@@ -24,7 +24,7 @@ class ModelSet
     end
     
     def sanitize_condition(condition)
-      ActiveRecord::Base.send(:sanitize_sql, condition)
+      model_class.send(:sanitize_sql, condition)
     end
     
     def limit_clause
