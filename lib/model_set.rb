@@ -162,6 +162,14 @@ class ModelSet
     end
   end
 
+  def each_with_index
+    i = (current_page - 1) * per_page
+    each do |model|
+      i += 1
+      yield(model, i)
+    end
+  end
+
   def reject(&block)
     self.clone.reject!(&block)
   end
