@@ -165,8 +165,8 @@ class ModelSet
   def each_with_index
     i = per_page ? (current_page - 1) * per_page : 0
     each do |model|
-      i += 1
       yield(model, i)
+      i += 1
     end
   end
 
