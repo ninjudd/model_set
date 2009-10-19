@@ -128,8 +128,8 @@ class ModelSet
         end
 
         begin
-          Timeout::timeout(MAX_QUERY_TIME) do
-            response = search.Query(opts[:query], index)
+          response = Timeout::timeout(MAX_QUERY_TIME) do
+            search.Query(opts[:query], index)
           end
           unless response
             e = SphinxError.new(search.GetLastError)
