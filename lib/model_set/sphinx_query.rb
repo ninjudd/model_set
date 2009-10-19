@@ -3,7 +3,7 @@ require File.dirname(__FILE__) + '/../../vendor/sphinx_client/lib/sphinx'
 class ModelSet
   class SphinxQuery < Query
     MAX_SPHINX_RESULTS = 1000
-    MAX_QUERY_TIME = 5000 # milliseconds
+    MAX_QUERY_TIME     = 5
 
     attr_reader :conditions, :filters
 
@@ -102,7 +102,7 @@ class ModelSet
         before_query(opts)
 
         search = Sphinx::Client.new
-        search.SetMaxQueryTime(MAX_QUERY_TIME)
+        search.SetMaxQueryTime(MAX_QUERY_TIME * 1000)
         search.SetServer(self.class.server_host, self.class.server_port)
         search.SetMatchMode(Sphinx::Client::SPH_MATCH_EXTENDED2)
         if limit
@@ -127,7 +127,9 @@ class ModelSet
         end
 
         begin
-          response = search.Query(opts[:query], index)
+          Timeout::timeout(MAX_QUERY_TIME) do
+            response = search.Query(opts[:query], index)
+          end
           unless response
             e = SphinxError.new(search.GetLastError)
             e.opts = opts
