@@ -1,4 +1,5 @@
 require File.dirname(__FILE__) + '/../../vendor/sphinx_client/lib/sphinx'
+require 'timeout'
 
 class ModelSet
   class SphinxQuery < Query
