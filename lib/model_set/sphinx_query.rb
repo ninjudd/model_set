@@ -126,7 +126,11 @@ class ModelSet
 
           if value.kind_of?(Range)
             min, max = filter_values([value.begin, value.end])
-            search.SetFilterRange(field.to_s, min, max, exclude)
+            if min.kind_of?(Float) or max.kind_of?(Float)
+              search.SetFilterFloatRange(field.to_s, min.to_f, max.to_f, exclude)
+            else
+              search.SetFilterRange(field.to_s, min, max, exclude)
+            end
           else
             search.SetFilter(field.to_s, filter_values(value), exclude)
           end
