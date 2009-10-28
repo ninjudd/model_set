@@ -24,7 +24,7 @@ class ModelSet
     end
 
     def geo_anchor!(opts)
-      @geo_anchor = opts
+      @geo = opts
     end
 
     def add_conditions!(conditions)
@@ -119,10 +119,13 @@ class ModelSet
         search.SetSortMode(*@sort_order) if @sort_order
         search.SetFilter('class_id', model_class.class_id) if model_class.respond_to?(:class_id)
 
-        if @geo_anchor
+        if @geo
           # Latitude and longitude in radians, radius in meters.
-          search.SetGeoAnchor(*@geo_anchor.slice(:latitude_field, :longitude_field, :latitude, :longitude))
-          search.SetFloatRange('@geodist', 0.0, @geo_anchor[:radius])
+          lat_field  = @geo[:latitude_field]  || "#{@geo[:prefix]}_latitude"
+          long_field = @geo[:longitude_field] || "#{@geo[:prefix]}_longitude"
+
+          search.SetGeoAnchor(lat_field, long_field, @geo[:latitude].to_f, @geo[:longitude].to_f)
+          search.SetFloatRange('@geodist', 0.0, @geo[:radius].to_f)
         end
 
         @filters and @filters.each do |field, value|
