@@ -10,7 +10,7 @@ class ModelSet
 
     def anchor!(query)
       add_filters!( id_field => query.ids.to_a )
-    end    
+    end        
 
     def add_filters!(filters)
       @filters ||= []
@@ -21,6 +21,10 @@ class ModelSet
         @filters << [key, value]
       end
       clear_cache!
+    end
+
+    def geo_anchor!(*args)
+      @geo_anchor = args.size == 4 ? args : nil
     end
 
     def add_conditions!(conditions)
@@ -112,7 +116,8 @@ class ModelSet
           search.SetLimits(0, MAX_SPHINX_RESULTS, MAX_SPHINX_RESULTS)
         end
 
-        search.SetSortMode(*@sort_order) if @sort_order
+        search.SetSortMode(*@sort_order)  if @sort_order
+        search.SetGeoAnchor(*@geo_anchor) if @geo_anchor
         search.SetFilter('class_id', model_class.class_id) if model_class.respond_to?(:class_id)
 
         @filters and @filters.each do |field, value|
