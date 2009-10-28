@@ -23,8 +23,8 @@ class ModelSet
       clear_cache!
     end
 
-    def geo_anchor!(*args)
-      @geo_anchor = args.size == 4 ? args : nil
+    def geo_anchor!(opts)
+      @geo_anchor = opts
     end
 
     def add_conditions!(conditions)
@@ -116,9 +116,14 @@ class ModelSet
           search.SetLimits(0, MAX_SPHINX_RESULTS, MAX_SPHINX_RESULTS)
         end
 
-        search.SetSortMode(*@sort_order)  if @sort_order
-        search.SetGeoAnchor(*@geo_anchor) if @geo_anchor
+        search.SetSortMode(*@sort_order) if @sort_order
         search.SetFilter('class_id', model_class.class_id) if model_class.respond_to?(:class_id)
+
+        if @geo_anchor
+          # Latitude and longitude in radians, radius in meters.
+          search.SetGeoAnchor(*@geo_anchor.slice(:latitude_field, :longitude_field, :latitude, :longitude))
+          search.SetFloatRange('@geodist', 0.0, @geo_anchor[:radius])
+        end
 
         @filters and @filters.each do |field, value|
           exclude = defined?(AntiObject) && value.kind_of?(AntiObject)
