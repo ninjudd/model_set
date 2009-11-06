@@ -237,6 +237,7 @@ class ModelSet
   def select_raw!(&block)
     anchor!(:raw)
     query.select!(&block)
+    self
   end
 
   def sort_by_raw(&block)
@@ -246,6 +247,7 @@ class ModelSet
   def sort_by_raw!(&block)
     anchor!(:raw)
     query.sort_by!(&block)
+    self
   end
 
   def sort(&block)
