@@ -1,5 +1,13 @@
 require File.dirname(__FILE__) + '/../../vendor/sphinx_client/lib/sphinx'
-require 'system_timer'
+begin
+  require 'system_timer'
+rescue LoadError => e
+  module SystemTimer
+    def self.timeout(time, &block)
+      Timeout.timeout(time, &block)
+    end
+  end
+end
 
 class ModelSet
   class SphinxQuery < Query
