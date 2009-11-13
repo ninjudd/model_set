@@ -8,6 +8,14 @@ class ModelSet
 
     attr_reader :conditions, :filters
 
+    def max_query_time
+      @max_query_time || MAX_QUERY_TIME
+    end
+
+    def max_query_time!(seconds)
+      @max_query_time = seconds
+    end
+
     def anchor!(query)
       add_filters!( id_field => query.ids.to_a )
     end        
@@ -107,7 +115,7 @@ class ModelSet
         before_query(opts)
 
         search = Sphinx::Client.new
-        search.SetMaxQueryTime(MAX_QUERY_TIME * 1000)
+        search.SetMaxQueryTime(max_query_time * 1000)
         search.SetServer(self.class.server_host, self.class.server_port)
         search.SetMatchMode(Sphinx::Client::SPH_MATCH_EXTENDED2)
         if limit
@@ -145,7 +153,7 @@ class ModelSet
         end
 
         begin
-          response = SystemTimer.timeout(MAX_QUERY_TIME) do
+          response = SystemTimer.timeout(max_query_time) do
             search.Query(opts[:query], index)
           end
           unless response
