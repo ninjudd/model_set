@@ -69,9 +69,9 @@ class ModelSet
   clone_method :without  
 
   clone_method :shuffle
-  def shuffle!(seed = nil)
+  def shuffle!
     reanchor!(:set)
-    query.shuffle!(seed)
+    query.shuffle!
     self
   end
 
