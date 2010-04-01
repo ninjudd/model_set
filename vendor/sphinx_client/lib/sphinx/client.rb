@@ -349,7 +349,7 @@ module Sphinx
 
       if values.instance_of?(Array) && values.size > 0
         values.each do |value|
-          assert { value.instance_of? Fixnum }
+          assert { value.instance_of? Fixnum or value.instance_of? Bignum }
         end
       
         @filters << { 'type' => SPH_FILTER_VALUES, 'attr' => attribute, 'exclude' => exclude, 'values' => values }
