@@ -13,6 +13,7 @@ begin
     s.authors = ["Justin Balthrop"]
     s.files =  FileList['README*', 'VERSION.yml', 'LICENSE', 'lib/**/*.rb', 'test/**/*', 'vendor/**/*'].to_a
   end
+  Jeweler::GemcutterTasks.new
 rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
 end
