@@ -50,13 +50,13 @@ class ModelSet
     ( @missing_ids || [] ).uniq
   end
 
-  [:add!, :unshift!, :subtract!, :intersect!, :reorder!, :reverse_reorder!].each do |action|  
+  [:add!, :unshift!, :subtract!, :intersect!, :reorder!, :reverse_reorder!].each do |action|
     define_method(action) do |models|
       anchor!(:set)
       query.send(action, as_ids(models))
       self
     end
-  end  
+  end
 
   clone_method :+, :add!
   clone_method :-, :subtract!
@@ -66,7 +66,7 @@ class ModelSet
   alias concat add!
   alias delete subtract!
   alias without! subtract!
-  clone_method :without  
+  clone_method :without
 
   clone_method :shuffle
   def shuffle!
@@ -305,7 +305,7 @@ class ModelSet
   def current_page # for will_paginate
     query.page
   end
-  
+
   def per_page # for will_paginate
     query.limit
   end
@@ -367,7 +367,7 @@ class ModelSet
     self.query = query_class(type).new(self, *args)
     self
   end
-  
+
   def default_query_type
     :sql
   end
@@ -583,7 +583,7 @@ protected
   def model_ids
     query.ids
   end
-  
+
 private
 
   def fetch_models(ids_to_fetch)
@@ -703,13 +703,10 @@ class ActiveRecord::Base
                WHERE #{where_clause} #{as_clause}
             }
           else
-            set = set_class.find_by_sql %{
-              SELECT #{set_class.id_field} FROM #{set_class.table_name}
-               WHERE #{own_key} = #{id} #{as_clause}
-            }
+            set = set_class.all.add_conditions!("#{set_class.table_name}.#{own_key} = #{id} #{as_clause}")
           end
         end
-        
+
         set.instance_variable_set(:@parent_model, self)
         def set.parent_model
           @parent_model
@@ -733,12 +730,12 @@ class ActiveRecord::Base
         @model_set_cache[name] = set
       end
       if options[:clone] == false or args.include?(:no_clone)
-        @model_set_cache[name] 
+        @model_set_cache[name]
       else
         @model_set_cache[name].clone
       end
     end
-    
+
     define_method :reset_model_set_cache do
       @model_set_cache = {}
     end
