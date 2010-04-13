@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{model_set}
-  s.version = "0.10.6"
+  s.version = "0.11.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Justin Balthrop"]
-  s.date = %q{2010-03-31}
+  s.date = %q{2010-04-13}
   s.description = %q{Easy manipulation of sets of ActiveRecord models}
   s.email = %q{code@justinbalthrop.com}
   s.extra_rdoc_files = [
@@ -19,6 +19,7 @@ Gem::Specification.new do |s|
   s.files = [
     "LICENSE",
      "README.rdoc",
+     "Rakefile",
      "VERSION.yml",
      "lib/model_set.rb",
      "lib/model_set/conditioned.rb",
@@ -32,6 +33,7 @@ Gem::Specification.new do |s|
      "lib/model_set/sql_base_query.rb",
      "lib/model_set/sql_query.rb",
      "lib/multi_set.rb",
+     "model_set.gemspec",
      "test/model_set_test.rb",
      "test/multi_set_test.rb",
      "test/test_helper.rb",
@@ -128,9 +130,15 @@ Gem::Specification.new do |s|
     s.specification_version = 3
 
     if Gem::Version.new(Gem::RubyGemsVersion) >= Gem::Version.new('1.2.0') then
+      s.add_runtime_dependency(%q<ordered_set>, [">= 1.0.0"])
+      s.add_runtime_dependency(%q<deep_clonable>, [">= 1.0.2"])
     else
+      s.add_dependency(%q<ordered_set>, [">= 1.0.0"])
+      s.add_dependency(%q<deep_clonable>, [">= 1.0.2"])
     end
   else
+    s.add_dependency(%q<ordered_set>, [">= 1.0.0"])
+    s.add_dependency(%q<deep_clonable>, [">= 1.0.2"])
   end
 end
 
