@@ -11,7 +11,8 @@ begin
     s.homepage = "http://github.com/ninjudd/model_set"
     s.description = "Easy manipulation of sets of ActiveRecord models"
     s.authors = ["Justin Balthrop"]
-    s.files =  FileList['README*', 'VERSION.yml', 'LICENSE', 'lib/**/*.rb', 'test/**/*', 'vendor/**/*'].to_a
+    s.add_dependency('ordered_set',   '>= 1.0.0')
+    s.add_dependency('deep_clonable', '>= 1.0.2')
   end
   Jeweler::GemcutterTasks.new
 rescue LoadError
