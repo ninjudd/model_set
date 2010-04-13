@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{model_set}
-  s.version = "0.11.0"
+  s.version = "0.11.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Justin Balthrop"]
@@ -132,13 +132,16 @@ Gem::Specification.new do |s|
     if Gem::Version.new(Gem::RubyGemsVersion) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<ordered_set>, [">= 1.0.0"])
       s.add_runtime_dependency(%q<deep_clonable>, [">= 1.0.2"])
+      s.add_runtime_dependency(%q<activerecord>, [">= 2.0.0"])
     else
       s.add_dependency(%q<ordered_set>, [">= 1.0.0"])
       s.add_dependency(%q<deep_clonable>, [">= 1.0.2"])
+      s.add_dependency(%q<activerecord>, [">= 2.0.0"])
     end
   else
     s.add_dependency(%q<ordered_set>, [">= 1.0.0"])
     s.add_dependency(%q<deep_clonable>, [">= 1.0.2"])
+    s.add_dependency(%q<activerecord>, [">= 2.0.0"])
   end
 end
 
