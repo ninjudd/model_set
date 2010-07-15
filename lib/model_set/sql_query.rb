@@ -85,7 +85,7 @@ class ModelSet
   private
     
     def select_clause
-      "SELECT #{id_field_with_prefix}"
+      "SELECT DISTINCT(#{id_field_with_prefix})"
     end
         
     def from_clause
