@@ -85,10 +85,7 @@ class ModelSet
   private
     
     def select_clause
-      select = "SELECT DISTINCT(#{id_field_with_prefix})"
-      sort_fields = @sort_order.collect {|f| f.gsub(/\b(DESC|ASC)\b/i, '')}.join(', ') if @sort_order
-      select << ", #{sort_fields}" if sort_fields
-      select
+      "SELECT #{id_field_with_prefix}"
     end
         
     def from_clause
