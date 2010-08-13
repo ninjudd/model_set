@@ -1,7 +1,7 @@
 class ModelSet
   module Conditioned
     # Shared methods for dealing with conditions.
-    attr_reader :conditions
+    attr_accessor :conditions
     
     def add_conditions!(*conditions)
       operator = conditions.shift if conditions.first.kind_of?(Symbol)

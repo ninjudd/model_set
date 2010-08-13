@@ -2,25 +2,44 @@ class ModelSet
   class SQLQuery < SQLBaseQuery
     include Conditioned
 
-    def anchor!(query)
-      if query.respond_to?(:sql)
-        sql = "#{id_field_with_prefix} IN (#{query.sql})"
+    def anchor!(query, opts = {})
+      if @limit_fetch = opts[:limit_fetch]
+        @reorder = query.ids
       else
-        sql = ids_clause(query.ids)
+        if query.respond_to?(:sql)
+          sql = "#{id_field_with_prefix} IN (#{query.sql})"
+        else
+          sql = ids_clause(query.ids)
+          @reorder = query.ids
+        end
+        add_conditions!(sql)
       end
-      @reorder = query.ids
-      add_conditions!(sql)
     end
-    
+
     def ids
       if @ids.nil?
-        @ids = fetch_id_set(sql)
-        @ids.reorder!(@reorder) if @reorder
+        if @limit_fetch
+          base_conditions = conditions
+          @ids = [].to_ordered_set
+          @reorder.each_slice(@limit_fetch) do |ids|
+            self.conditions = Conditions.new(:and, ids_clause(ids), *base_conditions)
+            @ids.concat fetch_id_set(sql)
+            if limit and @ids.size >= limit
+              @ids.reorder!(@reorder).limit!(limit)
+              break
+            end
+          end
+          self.conditions = base_conditions
+        else
+          @ids = fetch_id_set(sql)
+          @ids.reorder!(@reorder) if @reorder
+        end
       end
       @ids
     end
 
     def limit_enabled?
+      return true  if @limit_fetch
       return false if @reorder
       super
     end
@@ -56,7 +75,7 @@ class ModelSet
       @reorder    = nil
       clear_cache!
     end
-  
+
     def reverse!
       if @reorder
         @reorder.reverse!
@@ -81,23 +100,23 @@ class ModelSet
     def count
       @count ||= limit ? aggregate("COUNT(DISTINCT #{id_field_with_prefix})").to_i : size
     end
-    
+
   private
-    
+
     def select_clause
       "SELECT #{id_field_with_prefix}"
     end
-        
+
     def from_clause
       "FROM #{table_name} #{join_clause} WHERE #{conditions.to_s}"
     end
-    
+
     def order_clause
       return unless @sort_order
       # Prevent SQL injection attacks.
       "ORDER BY #{@sort_order.join(', ').gsub(/[^\w_, \.\(\)'\"]/, '')}"
     end
-        
+
     def join_clause
       return unless @joins or @sort_join
       joins = []

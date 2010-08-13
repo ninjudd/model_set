@@ -398,6 +398,11 @@ class ModelSet
     end
   end
 
+  clone_method :lazy_limit
+  def lazy_limit!(limit, fetch = limit * 10)
+    anchor!(:sql, :limit_fetch => fetch).limit!(limit)
+  end
+
   def extract_opt(key, args)
     opts = args.last.kind_of?(Hash) ? args.pop : {}
     opt  = opts.delete(key)
@@ -738,6 +743,14 @@ class ActiveRecord::Base
 
     define_method :reset_model_set_cache do
       @model_set_cache = {}
+    end
+  end
+end
+
+unless defined?(PGconn) and PGconn.respond_to?(:quote_ident)
+  class PGconn
+    def self.quote_ident(name)
+      %("#{name}")
     end
   end
 end
