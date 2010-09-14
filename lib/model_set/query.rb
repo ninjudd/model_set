@@ -2,12 +2,12 @@ class ModelSet
   class Query
     deep_clonable
 
-    def initialize(model_set = ModelSet)
+    def initialize(model_set = ModelSet, *args)
       if model_set.kind_of?(Class)
         @set_class = model_set
       else
         @set_class = model_set.class
-        anchor!(model_set.query) if model_set.query
+        anchor!(model_set.query, *args) if model_set.query
       end
     end
 

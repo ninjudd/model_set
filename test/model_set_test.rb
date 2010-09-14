@@ -1,7 +1,7 @@
 require File.dirname(__FILE__) + '/test_helper'
 
 class ModelSetTest < Test::Unit::TestCase
-  class CreateTables < ActiveRecord::Migration    
+  class CreateTables < ActiveRecord::Migration
     def self.up
       create_table :heroes do |t|
         t.column :name, :string
@@ -49,7 +49,7 @@ class ModelSetTest < Test::Unit::TestCase
       drop_table :robots
     end
   end
-  
+
   class Superpower < ActiveRecord::Base
   end
 
@@ -71,13 +71,13 @@ class ModelSetTest < Test::Unit::TestCase
       end
     end
   end
-  
+
   class HeroSet < ModelSet
     constructor  :with_universe
     clone_method :with_universe
     def with_universe!(universe)
       add_conditions!("universe = '#{universe}'")
-    end    
+    end
 
     clone_method :add_birthday
     def add_birthday!
@@ -90,18 +90,18 @@ class ModelSetTest < Test::Unit::TestCase
       CreateTables.verbose = false
       CreateTables.up
     end
-  
+
     teardown do
       CreateTables.down
     end
-  
+
     should "construct a model set" do
       captain  = Hero.create(:name => 'Captain America', :universe => 'Marvel')
       spidey   = Hero.create(:name => 'Spider Man',      :universe => 'Marvel')
       batman   = Hero.create(:name => 'Batman',          :universe => 'D.C.'  )
       superman = Hero.create(:name => 'Superman',        :universe => 'D.C.'  )
       ironman  = Hero.create(:name => 'Iron Man',        :universe => 'Marvel')
-      
+
       set = HeroSet.with_universe('Marvel')
       assert_equal [captain.id, spidey.id, ironman.id], set.ids
     end
@@ -123,10 +123,10 @@ class ModelSetTest < Test::Unit::TestCase
     should "order and reverse set" do
       captain   = Hero.create(:name => 'Captain America', :universe => 'Marvel')
       spidey    = Hero.create(:name => 'Spider Man',      :universe => 'Marvel')
-      wolverine = Hero.create(:name => 'Wolverine',       :universe => 'Marvel'  )
-      phoenix   = Hero.create(:name => 'Phoenix',         :universe => 'Marvel'  )
+      wolverine = Hero.create(:name => 'Wolverine',       :universe => 'Marvel')
+      phoenix   = Hero.create(:name => 'Phoenix',         :universe => 'Marvel')
       ironman   = Hero.create(:name => 'Iron Man',        :universe => 'Marvel')
-      
+
       ids = [captain.id, ironman.id, phoenix.id, spidey.id, wolverine.id]
       set = HeroSet.with_universe('Marvel')
 
@@ -154,59 +154,59 @@ class ModelSetTest < Test::Unit::TestCase
       missing_id = 5555
       spidey = Hero.create(:name => 'Spider Man', :universe => 'Marvel')
       set = HeroSet.new([spidey.id, missing_id])
-      
+
       # Iterate through the profiles so the missing ones will be detected.
       set.each {}
       assert_equal [missing_id], set.missing_ids
     end
-  
+
     should "have missing ids with add_fields" do
       missing_id = 5555
       spidey = Hero.create(:name => 'Spider Man', :universe => 'Marvel')
       set = HeroSet.new([spidey.id, missing_id]).add_birthday
-      
+
       # Iterate through the profiles so the missing ones will be detected.
       set.each {}
       assert_equal [missing_id], set.missing_ids
     end
-  
+
     should "support has_set" do
       hero = Hero.create(:name => 'Mr. Invisible')
       mighty_mouse = Superpet.create(:name => 'Mighty Mouse', :owner_id => hero.id)
       underdog     = Superpet.create(:name => 'Underdog', :owner_id => hero.id)
-      
+
       set = hero.pets
       assert_equal SuperpetSet, set.class
       assert_equal [mighty_mouse.id, underdog.id], set.ids
     end
-    
+
     should "support has_set with through" do
       hero = Hero.create(:name => 'Mr. Invisible')
       invisibility = Superpower.create(:name => 'Invisibility')
       flying       = Superpower.create(:name => 'Flying')
       HeroSuperpower.create(:hero_id => hero.id, :power_id => invisibility.id)
       HeroSuperpower.create(:hero_id => hero.id, :power_id => flying.id)
-      
+
       set = hero.superpowers
       assert_equal SuperpowerSet, set.class
       assert_equal [invisibility.id, flying.id], set.ids
     end
-  
+
     should "allow set extensions" do
       hero = Hero.create(:name => 'Mr. Invisible')
       mighty_mouse = Superpet.create(:name => 'Mighty Mouse', :owner_id => hero.id, :species => 'mouse')
       sammy        = Superpet.create(:name => 'Sammy Davis Jr. Jr.', :owner_id => hero.id, :species => 'dog')
       underdog     = Superpet.create(:name => 'Underdog', :owner_id => hero.id, :species => 'dog')
-      
+
       set = hero.pets
       assert_equal ['mouse', 'dog', 'dog'], set.collect {|pet| pet.species}
-      
+
       assert_equal [sammy.id, underdog.id], set.dogs!.ids
     end
 
     class Robot < ActiveRecord::Base
     end
-    
+
     class RobotSet < ModelSet
     end
 
@@ -218,18 +218,18 @@ class ModelSetTest < Test::Unit::TestCase
       @small_wonder = Robot.create(:name => 'Vicki',      :classification => :child     )
       @t1000        = Robot.create(:name => 'Terminator', :classification => :assasin   )
       @johnny5      = Robot.create(:name => 'Johnny 5',   :classification => :miltary   )
-      
+
       @bot_set = RobotSet.new([@bender,@r2d2,@c3po,@rosie,@small_wonder,@t1000,@johnny5])
-      
+
       @data    = Robot.create(:name => 'Data',       :classification => :positronic)
       @number8 = Robot.create(:name => 'Boomer',     :classification => :cylon     )
     end
-  
+
     should "be empty" do
       set = RobotSet.empty
       assert_equal 0, set.size
       assert set.empty?
-      
+
       set = RobotSet.new(@bender)
       assert !set.empty?
     end
@@ -248,13 +248,13 @@ class ModelSetTest < Test::Unit::TestCase
 
     should "delete models from a set" do
       set = RobotSet.new([@rosie, @small_wonder, @c3po])
-      
+
       set.delete(@c3po)
       assert_equal [@rosie.id, @small_wonder.id], set.ids
-      
+
       set.delete(@rosie.id)
       assert_equal [@small_wonder.id], set.ids
-      
+
       set.delete(@small_wonder)
       assert_equal [], set.ids
       assert set.empty?
@@ -263,26 +263,26 @@ class ModelSetTest < Test::Unit::TestCase
     should "select models from a set" do
       assert_equal [@r2d2, @c3po], @bot_set.select {|bot| bot.classification == :droid}.to_a
       assert_equal 7, @bot_set.size
-      
+
       @bot_set.select! {|bot| bot.classification == :miltary}
-      assert_equal [@johnny5], @bot_set.to_a 
+      assert_equal [@johnny5], @bot_set.to_a
     end
-    
+
     should "sort a set" do
       assert_equal [@bender,@c3po,@johnny5,@r2d2,@rosie,@t1000,@small_wonder], @bot_set.sort {|a,b| a.name <=> b.name}.to_a
       assert_equal @johnny5, @bot_set.last
-      
+
       @bot_set.sort! {|a,b| b.name <=> a.name}
-      assert_equal [@bender,@c3po,@johnny5,@r2d2,@rosie,@t1000,@small_wonder].reverse, @bot_set.to_a 
+      assert_equal [@bender,@c3po,@johnny5,@r2d2,@rosie,@t1000,@small_wonder].reverse, @bot_set.to_a
 
       @bot_set.reverse!
-      assert_equal [@bender,@c3po,@johnny5,@r2d2,@rosie,@t1000,@small_wonder], @bot_set.to_a 
+      assert_equal [@bender,@c3po,@johnny5,@r2d2,@rosie,@t1000,@small_wonder], @bot_set.to_a
     end
-    
+
     should "sort a set by name" do
       assert_equal [@bender,@c3po,@johnny5,@r2d2,@rosie,@t1000,@small_wonder], @bot_set.sort_by {|bot| bot.name}.to_a
     end
-    
+
     should "reject models from a set" do
       @bot_set.reject! {|bot| bot.classification == :domestic}
       assert !@bot_set.include?(@rosie)
@@ -294,19 +294,19 @@ class ModelSetTest < Test::Unit::TestCase
       humanoids = RobotSet.new([@small_wonder, @t1000, @data, @number8])
       metalics  = RobotSet.new([@r2d2, @c3po, @johnny5])
       cartoons  = RobotSet.new([@bender, @rosie])
-      
+
       assert_equal ['C3PO', 'R2D2', 'Johnny 5'],                    (droids + metalics).collect {|bot| bot.name}
       assert_equal ['Bender', 'Rosie', 'C3PO', 'R2D2', 'Johnny 5'], (cartoons + droids + metalics).collect {|bot| bot.name}
       assert_equal 5, (cartoons + droids + metalics).size
       assert_equal 5, (cartoons + droids + metalics).count
-      
+
       assert_equal [],                     (droids - metalics).collect {|bot| bot.name}
       assert_equal ['Johnny 5'],           (metalics - droids).collect {|bot| bot.name}
       assert_equal ['Terminator', 'Data'], (humanoids - womanoids).collect {|bot| bot.name}
       assert_equal ['Bender'],             (cartoons - womanoids).collect {|bot| bot.name}
       assert_equal 2, (humanoids - womanoids).size
       assert_equal 2, (humanoids - womanoids).count
-      
+
       assert_equal ['C3PO', 'R2D2'],    (droids & metalics).collect {|bot| bot.name}
       assert_equal ['R2D2', 'C3PO'],    (metalics & droids).collect {|bot| bot.name}
       assert_equal ['Vicki', 'Boomer'], (humanoids & womanoids).collect {|bot| bot.name}
@@ -319,11 +319,33 @@ class ModelSetTest < Test::Unit::TestCase
       set -= @r2d2
       assert_equal ['C3PO', 'Johnny 5'], set.collect {|bot| bot.name}
     end
-    
+
     should "clone a set" do
       set     = RobotSet.new([1])
       new_set = set.clone
       assert new_set.object_id != set.object_id
+    end
+
+    should "limit lazily" do
+      captain   = Hero.create(:name => 'Captain America', :universe => 'Marvel')
+      spidey    = Hero.create(:name => 'Spider Man',      :universe => 'Marvel')
+      wolverine = Hero.create(:name => 'Wolverine',       :universe => 'Marvel')
+      phoenix   = Hero.create(:name => 'Phoenix',         :universe => 'Marvel')
+      ironman   = Hero.create(:name => 'Iron Man',        :universe => 'Marvel')
+      zombie    = Hero.create(:name => 'Zombie 1',        :universe => 'Zombie')
+      batman    = Hero.create(:name => 'Batman',          :universe => 'D.C.'  )
+      superman  = Hero.create(:name => 'Superman',        :universe => 'D.C.'  )
+      ryu       = Hero.create(:name => 'Ryu',             :universe => 'Capcom')
+      ken       = Hero.create(:name => 'Ryu',             :universe => 'Capcom')
+      zangief   = Hero.create(:name => 'Zangief',         :universe => 'Capcom')
+      blanka    = Hero.create(:name => 'Blanka',          :universe => 'Capcom')
+
+      ids = [superman.id, phoenix.id, zangief.id, captain.id, ryu.id, zombie.id, batman.id, blanka.id, spidey.id, ken.id]
+
+      s = HeroSet.new(ids)
+      s.lazy_limit!(3, 3).add_conditions!(:universe => 'Capcom')
+
+      assert_equal [zangief.id, ryu.id, blanka.id], s.ids
     end
   end
 end
