@@ -186,9 +186,9 @@ class ModelSet
     def filter_values(values)
       Array(values).collect do |value|
         case value
-        when Date       : value.to_time.to_i
-        when TrueClass  : 1
-        when FalseClass : 0
+        when Date       then value.to_time.to_i
+        when TrueClass  then 1
+        when FalseClass then 0
         else
           value.to_i
         end
