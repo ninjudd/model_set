@@ -1,3 +1,5 @@
+require 'solr'
+
 class ModelSet
   class SolrQuery < Query
     include Conditioned
@@ -23,37 +25,34 @@ class ModelSet
       @ids
     end
 
+    def resp
+      fetch_results if @resp.nil?
+      @resp
+    end
+
   private
 
     def fetch_results
-      query = "#{conditions.to_s};#{@sort_order.to_s}"
-      
-      solr_params = []
-      solr_params << "q=#{ ERB::Util::url_encode(query) }"
-      solr_params << "wt=ruby"
-      solr_params << "fl=pk_i"
-      
+      query = "#{conditions.to_s}"
+      solr_params = {:highlighting => {}}
+
       if limit
-        solr_params << "rows=#{limit}"
-        solr_params << "start=#{offset}"
+        solr_params[:rows]  = limit
+        solr_params[:start] = offset
       else
-        solr_params << "rows=#{MAX_SOLR_RESULTS}"
+        solr_params[:rows] = MAX_SOLR_RESULTS
       end
-      
-      solr_params = solr_params.join('&')
+
       before_query(solr_params)
-      
-      # Catch any errors when calling solr so we can log the params.
-      begin
-        resp = eval ActsAsSolr::Post.execute(solr_params)
+      begin 
+        @resp = Solr::Connection.new(SOLR_HOST).search(query, solr_params)
       rescue Exception => e
         on_exception(e, solr_params)
       end
-
       after_query(solr_params)
-      
-      @count = resp['response']['numFound']
-      @ids   = resp['response']['docs'].collect {|doc| doc['pk_i'].to_i}.to_ordered_set
+
+      @count = @resp.total_hits
+      @ids   = @resp.hits.map{ |hit| hit["discussion_id"].to_i }
       @size  = @ids.size
     end
 
