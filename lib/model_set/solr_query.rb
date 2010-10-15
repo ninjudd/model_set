@@ -2,6 +2,7 @@ require 'solr'
 
 class ModelSet
   class SolrQuery < Query
+    attr_reader :response
     include Conditioned
 
     MAX_SOLR_RESULTS = 1000
@@ -25,11 +26,6 @@ class ModelSet
       @ids
     end
 
-    def resp
-      fetch_results if @resp.nil?
-      @resp
-    end
-
   private
 
     def fetch_results
@@ -45,14 +41,14 @@ class ModelSet
 
       before_query(solr_params)
       begin 
-        @resp = Solr::Connection.new(SOLR_HOST).search(query, solr_params)
+        @response = Solr::Connection.new(SOLR_HOST).search(query, solr_params)
       rescue Exception => e
         on_exception(e, solr_params)
       end
       after_query(solr_params)
 
-      @count = @resp.total_hits
-      @ids   = @resp.hits.map{ |hit| hit["discussion_id"].to_i }
+      @count = @response.total_hits
+      @ids   = @response.hits.map{ |hit| hit["discussion_id"].to_i }
       @size  = @ids.size
     end
 
