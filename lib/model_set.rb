@@ -615,9 +615,13 @@ private
       end
       models.each do |model|
         id = model.send(id_field)
-        models_by_id[id] ||= model
+        models_by_id[id] ||= after_fetch(model)
       end
     end
+  end
+
+  def after_fetch(model)
+    model
   end
 
   def as_id(model)
