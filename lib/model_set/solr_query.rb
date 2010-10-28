@@ -26,6 +26,10 @@ class ModelSet
       @ids
     end
 
+    def config(params)
+      @config = @config ? @config.merge(params) : params
+    end
+
   private
 
     def fetch_results
@@ -41,14 +45,18 @@ class ModelSet
 
       before_query(solr_params)
       begin 
-        @response = Solr::Connection.new(SOLR_HOST).search(query, solr_params)
+        solr_uri = "http://" + SOLR_HOST 
+        if @config[:core]
+          solr_uri << "/" + @config[:core]
+        end
+        @response = Solr::Connection.new(solr_uri).search(query, solr_params)        
       rescue Exception => e
         on_exception(e, solr_params)
       end
       after_query(solr_params)
 
       @count = @response.total_hits
-      @ids   = @response.hits.map{ |hit| hit["discussion_id"].to_i }
+      @ids   = @response.hits.map{ |hit| hit[@config[:response_id_field]].to_i }
       @size  = @ids.size
     end
 
