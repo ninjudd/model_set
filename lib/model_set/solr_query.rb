@@ -36,6 +36,10 @@ class ModelSet
       query = "#{conditions.to_s}"
       solr_params = {:highlighting => {}}
 
+      if set_class.respond_to?(:solr_field_list)
+        solr_params[:field_list] = set_class.solr_field_list
+      end
+
       if limit
         solr_params[:rows]  = limit
         solr_params[:start] = offset
