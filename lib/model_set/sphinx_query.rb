@@ -48,7 +48,7 @@ class ModelSet
         conditions.each do |field, value|
           next if value.nil?
           field = field.join(',') if field.kind_of?(Array)
-          value = value.collect {|v| '"' + v + '"'}.join('|') if value.kind_of?(Array)
+          value = "(#{value.join('|')})" if value.kind_of?(Array)
           add_conditions!("@(#{field}) #{value}")
         end
       else
