@@ -114,7 +114,7 @@ class ModelSet
     def order_clause
       return unless @sort_order
       # Prevent SQL injection attacks.
-      "ORDER BY #{@sort_order.join(', ').gsub(/[^\w_, \.\(\)'\"]/, '')}"
+      "ORDER BY #{@sort_order.join(', ').gsub(/[^\w_, \.\(\)\[\]'\"]/, '')}"
     end
 
     def join_clause
