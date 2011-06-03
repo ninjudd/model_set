@@ -11,8 +11,8 @@ begin
     s.homepage = "http://github.com/ninjudd/model_set"
     s.description = "Easy manipulation of sets of ActiveRecord models"
     s.authors = ["Justin Balthrop"]
-    s.add_dependency('ordered_set',   '>= 1.0.0')
-    s.add_dependency('deep_clonable', '>= 1.0.2')
+    s.add_dependency('ordered_set',   '>= 1.0.1')
+    s.add_dependency('deep_clonable', '>= 1.1.0')
     s.add_dependency('activerecord', '>= 2.0.0')
   end
   Jeweler::GemcutterTasks.new
