@@ -26,7 +26,7 @@ class ModelSet
 
     def anchor!(query)
       add_filters!( id_field => query.ids.to_a )
-    end        
+    end
 
     def add_filters!(filters)
       @filters ||= []
@@ -63,8 +63,12 @@ class ModelSet
       @index ||= '*'
     end
 
-    def use_index!(index)
-      @index = index
+    def use_index!(index, opts = {})
+      if opts[:delta]
+        @index = "#{index} #{index}_delta"
+      else
+        @index = index
+      end
     end
 
     SORT_MODES = {
@@ -174,7 +178,7 @@ class ModelSet
           e.opts = opts
           on_exception(e)
         end
-        
+
         @count = response['total_found']
         @ids   = response['matches'].collect {|r| r['id']}.to_ordered_set
         @size  = @ids.size
@@ -182,7 +186,7 @@ class ModelSet
         after_query(opts)
       end
     end
-    
+
     def filter_values(values)
       Array(values).collect do |value|
         case value
