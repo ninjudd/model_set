@@ -115,7 +115,9 @@ class ModelSet
   private
 
     def fetch_results
-      if @conditions.nil? or @empty
+      if @conditions.nil?
+        raise ArgumentError.new('No conditions specified')
+      elsif @empty
         @count = 0
         @size  = 0
         @ids   = []
