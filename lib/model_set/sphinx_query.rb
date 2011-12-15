@@ -26,7 +26,7 @@ class ModelSet
 
     def anchor!(query)
       add_filters!( id_field => query.ids.to_a )
-    end
+    end        
 
     def add_filters!(filters)
       @filters ||= []
@@ -115,9 +115,7 @@ class ModelSet
   private
 
     def fetch_results
-      if @conditions.nil?
-        raise ArgumentError.new('No conditions specified')
-      elsif @empty
+      if @conditions.nil? or @empty
         @count = 0
         @size  = 0
         @ids   = []
@@ -180,7 +178,7 @@ class ModelSet
           e.opts = opts
           on_exception(e)
         end
-
+        
         @count = response['total_found']
         @ids   = response['matches'].collect {|r| r['id']}.to_ordered_set
         @size  = @ids.size
@@ -188,7 +186,7 @@ class ModelSet
         after_query(opts)
       end
     end
-
+    
     def filter_values(values)
       Array(values).collect do |value|
         case value
