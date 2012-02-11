@@ -556,6 +556,14 @@ class ModelSet
     end
   end
 
+  def self.id_type(id_type = nil)
+    if id_type.nil?
+      @id_type ||= :integer
+    else
+      @id_type = id_type.to_sym
+    end
+  end
+
   def self.id_field_with_prefix
     "#{self.table_name}.#{self.id_field}"
   end
@@ -609,7 +617,7 @@ private
         models = model_class.find(:all,
           :select     => fields.compact.join(','),
           :joins      => joins.compact.join(' '),
-          :conditions => db.ids_clause(ids_to_fetch, id_field_with_prefix),
+          :conditions => db.ids_clause(ids_to_fetch, id_field_with_prefix, self.class.id_type),
           :include    => @included_models
         )
       end
