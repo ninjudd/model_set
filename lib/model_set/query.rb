@@ -37,27 +37,29 @@ class ModelSet
       @page   = nil if offset
       clear_limited_cache!
     end
-    
+
     def unlimited!
       @limit  = nil
       @offset = nil
       @page   = nil
       clear_limited_cache!
     end
-    
+
     def clear_limited_cache!
       @ids  = nil
       @size = nil
       self
     end
-     
+
     def clear_cache!
       @count = nil
       clear_limited_cache!
     end
 
     attr_reader :set_class
-    delegate :id_field, :to => :set_class
+    delegate :id_field,             :to => :set_class
+    delegate :non_column_id_field,  :to => :set_class
+    delegate :id_field_with_prefix, :to => :set_class
 
     def model_class
       set_class.query_model_class
@@ -69,10 +71,6 @@ class ModelSet
 
     def table_name
       model_class.table_name
-    end
-
-    def id_field_with_prefix
-      "#{table_name}.#{id_field}"
     end
 
     attr_reader :limit, :sort_order
@@ -97,7 +95,7 @@ class ModelSet
       proc = self.class.before_query
       proc.bind(self).call(*args) if proc
     end
-    
+
     def self.before_query(&block)
       if block
         @before_query = block

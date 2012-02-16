@@ -564,8 +564,12 @@ class ModelSet
     end
   end
 
+  def self.non_column_id_field(non_column_id_field = false)
+    @non_column_id_field ||= non_column_id_field
+  end
+
   def self.id_field_with_prefix
-    "#{self.table_name}.#{self.id_field}"
+    self.non_column_id_field ? self.id_field.to_s : "#{self.table_name}.#{self.id_field}"
   end
 
   # Define instance methods based on class methods.
