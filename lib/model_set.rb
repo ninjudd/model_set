@@ -550,7 +550,7 @@ class ModelSet
 
   def self.id_field(id_field = nil)
     if id_field.nil?
-      @id_field ||= 'id'
+      @id_field ||= :id
     else
       @id_field = id_field
     end
@@ -564,12 +564,8 @@ class ModelSet
     end
   end
 
-  def self.non_column_id_field(non_column_id_field = false)
-    @non_column_id_field ||= non_column_id_field
-  end
-
   def self.id_field_with_prefix
-    self.non_column_id_field ? self.id_field.to_s : "#{self.table_name}.#{self.id_field}"
+    self.id_field.is_a?(String) ? self.id_field : "#{self.table_name}.#{self.id_field}"
   end
 
   # Define instance methods based on class methods.

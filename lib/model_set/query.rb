@@ -58,7 +58,6 @@ class ModelSet
 
     attr_reader :set_class
     delegate :id_field,             :to => :set_class
-    delegate :non_column_id_field,  :to => :set_class
     delegate :id_field_with_prefix, :to => :set_class
 
     def model_class
