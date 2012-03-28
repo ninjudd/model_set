@@ -76,7 +76,7 @@ class ModelSet
       :descending => Sphinx::Client::SPH_SORT_ATTR_DESC,
       :ascending  => Sphinx::Client::SPH_SORT_ATTR_ASC,
       :time       => Sphinx::Client::SPH_SORT_TIME_SEGMENTS,
-      :extending  => Sphinx::Client::SPH_SORT_EXTENDED,
+      :extended   => Sphinx::Client::SPH_SORT_EXTENDED,
       :expression => Sphinx::Client::SPH_SORT_EXPR,
     }
 
