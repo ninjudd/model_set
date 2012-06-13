@@ -5,7 +5,9 @@
 //
 
 //
-// Copyright (c) 2001-2008, Andrew Aksyonoff. All rights reserved.
+// Copyright (c) 2001-2012, Andrew Aksyonoff
+// Copyright (c) 2008-2012, Sphinx Technologies Inc
+// All rights reserved
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License. You should have
@@ -177,7 +179,7 @@ function sphUnpack64 ( $v )
 class SphinxClient
 {
 	var $_host;			///< searchd host (default is "localhost")
-	var $_port;			///< searchd port (default is 3312)
+	var $_port;			///< searchd port (default is 9312)
 	var $_offset;		///< how many records to seek from result-set start (default is 0)
 	var $_limit;		///< how many records to return from result-set starting at offset (default is 20)
 	var $_mode;			///< query matching mode (default is SPH_MATCH_ALL)
@@ -219,7 +221,7 @@ class SphinxClient
 	{
 		// per-client-object settings
 		$this->_host		= "localhost";
-		$this->_port		= 3312;
+		$this->_port		= 9312;
 
 		// per-query settings
 		$this->_offset		= 0;
