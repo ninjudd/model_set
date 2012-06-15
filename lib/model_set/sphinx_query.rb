@@ -83,6 +83,27 @@ class ModelSet
       clear_cache!
     end
 
+    RANKING_MODES = {
+      :proximity_bm25 => Sphinx::Client::SPH_RANK_PROXIMITY_BM25,
+      :bm25           => Sphinx::Client::SPH_RANK_BM25,
+      :none           => Sphinx::Client::SPH_RANK_NONE,
+      :word_count     => Sphinx::Client::SPH_RANK_WORDCOUNT,
+      :proximity      => Sphinx::Client::SPH_RANK_PROXIMITY,
+      :fieldmask      => Sphinx::Client::SPH_RANK_FIELDMASK,
+      :sph04          => Sphinx::Client::SPH_RANK_SPH04,
+      :total          => Sphinx::Client::SPH_RANK_TOTAL,
+    }
+
+    def rank_using!(mode_or_expr)
+      if mode_or_expr.nil?
+        @ranking = nil
+      elsif mode = RANKING_MODES[mode_or_expr]
+        @ranking = [mode]
+      else
+        @ranking = [Sphinx::Client::SPH_RANK_EXPR, mode_or_expr]
+      end
+    end
+
     def size
       fetch_results if @size.nil?
       @size
@@ -131,6 +152,7 @@ class ModelSet
         end
 
         search.SetSortMode(*@sort_order) if @sort_order
+        search.SetRankingMode(*@ranking) if @ranking
         search.SetFilter('class_id', model_class.class_id) if model_class.respond_to?(:class_id)
 
         if @geo

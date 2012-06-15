@@ -111,7 +111,8 @@ module Sphinx
     SPH_RANK_FIELDMASK      = 6
     SPH_RANK_SPH04          = 7
     SPH_RANK_EXPR           = 8
-    
+    SPH_RANK_TOTAL          = 9
+
     # Known sort modes
   
     # sort by document relevance desc, then by date
