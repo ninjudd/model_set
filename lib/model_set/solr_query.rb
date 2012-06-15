@@ -1,11 +1,15 @@
-require 'solr'
+require 'rsolr'
 
 class ModelSet
   class SolrQuery < Query
-    attr_reader :response
     include Conditioned
 
     MAX_SOLR_RESULTS = 1000
+
+    class << self
+      attr_accessor :host
+    end
+    attr_reader :response
 
     def anchor!(query)
       add_conditions!( ids_clause(query.ids) )
@@ -26,41 +30,39 @@ class ModelSet
       @ids
     end
 
-    def config(params)
-      @config = @config ? @config.merge(params) : params
+    def use_index!(index)
+      @index = index
+    end
+
+    def select_fields!(*fields)
+      @select = fields.flatten
     end
 
   private
 
     def fetch_results
       query = "#{conditions.to_s}"
-      solr_params = {:highlighting => {}}
-
-      if set_class.respond_to?(:solr_field_list)
-        solr_params[:field_list] = set_class.solr_field_list
-      end
+      params = {}
+      params[:field_list] = @select || ['id']
 
       if limit
-        solr_params[:rows]  = limit
-        solr_params[:start] = offset
+        params[:rows]  = limit
+        params[:start] = offset
       else
-        solr_params[:rows] = MAX_SOLR_RESULTS
+        params[:rows] = MAX_SOLR_RESULTS
       end
 
       before_query(solr_params)
       begin 
-        solr_uri = "http://" + SOLR_HOST 
-        if @config[:core]
-          solr_uri << "/" + @config[:core]
-        end
-        @response = Solr::Connection.new(solr_uri).search(query, solr_params)        
+        search = RSolr.connect(:url => "http://" + self.class.host)
+        @response = search.get(@index, :q => query, :params => params)['response']
       rescue Exception => e
         on_exception(e, solr_params)
       end
       after_query(solr_params)
 
-      @count = @response.total_hits
-      @ids   = @response.hits.map{ |hit| hit[@config[:response_id_field]].to_i }
+      @count = @response['numFound']
+      @ids   = @response['docs'].collect {|doc| doc['id'].to_i}
       @size  = @ids.size
     end
 
@@ -68,10 +70,6 @@ class ModelSet
       return 'pk_i:(false)' if ids.empty?
       field ||= 'pk_i'
       "#{field}:(#{ids.join(' OR ')})"
-    end
-
-    def sanitize_condition(condition)
-      condition
     end
   end
 end
