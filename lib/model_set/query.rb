@@ -129,5 +129,14 @@ class ModelSet
       end
     end
 
+    def condition_ops
+      { :not => 'NOT ',
+        :and => ' AND ',
+        :or  => ' OR ' }
+    end
+
+    def transform_condition(condition)
+      [condition]
+    end
   end
 end

@@ -27,6 +27,10 @@ class ModelSet
       model_class.send(:sanitize_sql, condition)
     end
 
+    def transform_condition(condition)
+      [sanitize_condition(condition)]
+    end
+
     def limit_clause
       return unless limit
       limit_clause = "LIMIT #{limit}"

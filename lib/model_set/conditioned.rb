@@ -2,26 +2,25 @@ class ModelSet
   module Conditioned
     # Shared methods for dealing with conditions.
     attr_accessor :conditions
-    
+
     def add_conditions!(*conditions)
-      operator = conditions.shift if conditions.first.kind_of?(Symbol)
-      operator ||= :and
+      new_conditions = conditions.first.kind_of?(Symbol) ? [conditions.shift] : []
 
-      # Sanitize conditions.
-      conditions.collect! do |condition|
-        condition.kind_of?(Conditions) ? condition : Conditions.new( sanitize_condition(condition) )
+      conditions.each do |condition|
+        if condition.kind_of?(Conditions)
+          new_conditions << condition
+        else
+          new_conditions.concat([*transform_condition(condition)])
+        end
       end
+      return self if new_conditions.empty?
 
-      if operator == :not
-        # In this case, :not actually means :and :not.
-        conditions = ~Conditions.new(:and, *conditions)
-        operator   = :and
-      end
-
-      conditions << @conditions if @conditions
-      @conditions = Conditions.new(operator, *conditions)
-
+      @conditions = to_conditions(*new_conditions) << @conditions
       clear_cache!
+    end
+
+    def to_conditions(*conditions)
+      Conditions.new(conditions, condition_ops)
     end
 
     def invert!

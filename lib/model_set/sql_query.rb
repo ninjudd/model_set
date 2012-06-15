@@ -22,7 +22,7 @@ class ModelSet
           base_conditions = conditions
           @ids = [].to_ordered_set
           @reorder.each_slice(@limit_fetch) do |ids|
-            self.conditions = Conditions.new(:and, ids_clause(ids), *base_conditions)
+            self.conditions = to_conditions(:and, ids_clause(ids), *base_conditions)
             @ids.concat fetch_id_set(sql)
             if limit and @ids.size >= limit
               @ids.reorder!(@reorder).limit!(limit)

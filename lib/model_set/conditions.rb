@@ -4,40 +4,27 @@ class ModelSet
 
     attr_reader :operator, :conditions
 
-    def self.new(*args)
-      if args.size == 1 and args.first.kind_of?(self)
-        # Just clone if the only argument is a Conditions object.
-        args.first.clone
-      elsif args.size == 2 and [:and, :or].include?(args.first)
-        # The operator is not necessary if there is only one subcondition.
-        new(args.last)
-      else
-        super
-      end
-    end
-
     def new(*args)
       self.class.new(*args)
     end
 
-    def initialize(*args)
-      if args.size == 1 and not args.first.kind_of?(Symbol)
-        # Terminal.
-        @conditions = args
-      else
-        @operator = args.shift
-        raise "invalid operator :#{operator}" unless [:and, :or, :not].include?(operator)
-
-        if operator == :not
-          raise "unary operator :not cannot have multiple conditions" if args.size > 1
-          @conditions = [self.class.new(args.first)] 
+    def initialize(conditions, ops)
+      if conditions.kind_of?(Array)
+        @ops      = ops
+        @operator = conditions.first.kind_of?(Symbol) ? conditions.shift : :and
+        if @operator == :not
+          # In this case, :not actually means :and :not.
+          @conditions = ~Conditions.new([:and, conditions], @ops)
         else
+          raise "invalid operator :#{operator}" unless [:and, :or].include?(@operator)
           # Compact the conditions if possible.
           @conditions = []
-          args.each do |clause|
+          conditions.each do |clause|
             self << clause
           end
         end
+      else
+        @conditions = [conditions]
       end
     end
 
@@ -46,15 +33,17 @@ class ModelSet
     end
 
     def <<(clause)
+      return self unless clause
       raise 'cannot append conditions to a terminal' if terminal?
-      
-      clause = self.class.new(clause) 
+
+      clause = new(clause, @ops) unless clause.kind_of?(Conditions)
       if clause.operator == operator
         @conditions.concat(clause.conditions)
       else
         @conditions << clause
       end
       @conditions.uniq!
+      self
     end
 
     def ~
@@ -73,20 +62,22 @@ class ModelSet
       new(:and, self, other)
     end
 
-    def to_s
-      return conditions.first if terminal?
+    def op(type)
+      @ops[type]
+    end
 
-      condition_strings = conditions.collect do |condition|
-        condition.operator == :not ? condition.to_s : "(#{condition.to_s})"
-      end.sort_by {|s| s.size}
+    def to_s
+      return conditions.first.to_s if terminal? or conditions.empty?
+
+      condition_strings = conditions.collect {|c| c.to_s}.sort_by {|s| s.size}
 
       case operator
-      when :not
-        "NOT #{condition_strings.first}"
-      when :and
-        "#{condition_strings.join(' AND ')}"
-      when :or
-        "#{condition_strings.join(' OR ')}"
+      when :not then
+        "(#{op(:not)} #{condition_strings.first})"
+      when :and then
+        "(#{condition_strings.join(op(:and))})"
+      when :or then
+        "(#{condition_strings.join(op(:or))})"
       end
     end
 

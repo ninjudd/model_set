@@ -11,9 +11,14 @@ end
 
 class ModelSet
   class SphinxQuery < Query
+    include Conditioned
+
     MAX_SPHINX_RESULTS = 1000
     MAX_QUERY_TIME     = 5
 
+    class << self
+      attr_accessor :host, :port
+    end
     attr_reader :conditions, :filters
 
     def max_query_time
@@ -43,22 +48,6 @@ class ModelSet
       @geo = opts
     end
 
-    def add_conditions!(conditions)
-      if conditions.kind_of?(Hash)
-        conditions.each do |field, value|
-          next if value.nil?
-          field = field.join(',') if field.kind_of?(Array)
-          value = "(#{value.join('|')})" if value.kind_of?(Array)
-          add_conditions!("@(#{field}) #{value}")
-        end
-      else
-        @conditions ||= []
-        @conditions << conditions
-        @conditions.uniq!
-        clear_cache!
-      end
-    end
-
     def index
       @index ||= '*'
     end
@@ -69,6 +58,10 @@ class ModelSet
       else
         @index = index
       end
+    end
+
+    def select_fields!(*fields)
+      @select = fields.flatten
     end
 
     SORT_MODES = {
@@ -115,20 +108,21 @@ class ModelSet
   private
 
     def fetch_results
-      if @conditions.nil? or @empty
+      if conditions.nil? or @empty
         @count = 0
         @size  = 0
         @ids   = []
       else
         opts = {
           :filters => @filters,
-          :query   => conditions_clause,
+          :query   => conditions.to_s,
         }
         before_query(opts)
 
         search = Sphinx::Client.new
         search.SetMaxQueryTime(max_query_time * 1000)
-        search.SetServer(self.class.server_host, self.class.server_port)
+        search.SetServer(self.class.host, self.class.port)
+        search.SetSelect((@select || ['id']).join(','))
         search.SetMatchMode(Sphinx::Client::SPH_MATCH_EXTENDED2)
         if limit
           search.SetLimits(offset, limit, offset + limit)
@@ -199,12 +193,25 @@ class ModelSet
       end
     end
 
-    class << self
-      attr_accessor :server_host, :server_port
+    def condition_ops
+      { :not => '-',
+        :and => ' ',
+        :or  => '|' }
     end
 
-    def conditions_clause
-      @conditions ? @conditions.join(' ') : ''
+    def transform_condition(condition)
+      if condition.kind_of?(Hash)
+        condition.collect do |field, value|
+          next if value.nil?
+          field = field.join(',') if field.kind_of?(Array)
+          if value.kind_of?(Array)
+            value = to_conditions(:or, *value).to_s
+          end
+          "@(#{field}) #{value}"
+        end.compact
+      else
+        condition
+      end
     end
   end
 end
