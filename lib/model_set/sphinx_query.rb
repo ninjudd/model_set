@@ -227,7 +227,8 @@ class ModelSet
           next if value.nil?
           field = field.join(',') if field.kind_of?(Array)
           if value.kind_of?(Array)
-            value = to_conditions(:or, *value).to_s
+            value.unshift(:or) unless value.first.kind_of?(Symbol)
+            value = to_conditions(*value).to_s
           end
           "@(#{field}) #{value}"
         end.compact
