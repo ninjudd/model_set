@@ -146,7 +146,7 @@ class ModelSet
         search.SetSelect((@select || ['id']).join(','))
         search.SetMatchMode(Sphinx::Client::SPH_MATCH_EXTENDED2)
         if limit
-          search.SetLimits(offset, limit, offset + limit)
+          search.SetLimits(offset, limit, MAX_SPHINX_RESULTS)
         else
           search.SetLimits(0, MAX_SPHINX_RESULTS, MAX_SPHINX_RESULTS)
         end
