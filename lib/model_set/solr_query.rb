@@ -1,4 +1,5 @@
 require 'rsolr'
+require 'pp'
 
 class ModelSet
   class SolrQuery < Query
@@ -13,7 +14,7 @@ class ModelSet
 
     def anchor!(query)
       add_conditions!( ids_clause(query.ids) )
-    end    
+    end
 
     def size
       fetch_results if @size.nil?
@@ -30,8 +31,8 @@ class ModelSet
       @ids
     end
 
-    def use_index!(index)
-      @index = index
+    def use_core!(core)
+      @core = core
     end
 
     def select_fields!(*fields)
@@ -41,10 +42,8 @@ class ModelSet
   private
 
     def fetch_results
-      query = "#{conditions.to_s}"
-      params = {}
-      params[:field_list] = @select || ['id']
-
+      params = {:q => "#{conditions.to_s}"}
+      params[:fl] = @select || ['id']
       if limit
         params[:rows]  = limit
         params[:start] = offset
@@ -52,17 +51,20 @@ class ModelSet
         params[:rows] = MAX_SOLR_RESULTS
       end
 
-      before_query(solr_params)
-      begin 
-        search = RSolr.connect(:url => "http://" + self.class.host)
-        @response = search.get(@index, :q => query, :params => params)['response']
+      before_query(params)
+      begin
+        url = "http://" + self.class.host
+        url += "/" + @core if @core
+        search = RSolr.connect(:url => url)
+        @response = search.get('select', :params => params)['response']
       rescue Exception => e
-        on_exception(e, solr_params)
+        on_exception(e, params)
       end
-      after_query(solr_params)
+      after_query(params)
 
       @count = @response['numFound']
-      @ids   = @response['docs'].collect {|doc| doc['id'].to_i}
+      #TODO: put this in a hook
+      @ids   = @response['docs'].collect {|doc| doc['id'].split('-').last.to_i}
       @size  = @ids.size
     end
 
