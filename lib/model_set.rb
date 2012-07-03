@@ -478,7 +478,15 @@ class ModelSet
       models.ids
     else
       models = [models] if not models.kind_of?(Enumerable)
-      models.collect {|model| model.kind_of?(ActiveRecord::Base) ? model.id : model.to_i }
+      models.collect {|model| as_id(model)}
+    end
+  end
+
+  def self.as_id(model)
+    case model
+    when ActiveRecord::Base then model.id
+    when String             then model.split('-').last.to_i
+    else                         model.to_i
     end
   end
 

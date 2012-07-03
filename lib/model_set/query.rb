@@ -56,7 +56,7 @@ class ModelSet
       clear_limited_cache!
     end
 
-    attr_reader :set_class
+    attr_reader :set_class, :limit, :sort_order
     delegate :id_field,             :to => :set_class
     delegate :id_field_with_prefix, :to => :set_class
 
@@ -71,8 +71,6 @@ class ModelSet
     def table_name
       model_class.table_name
     end
-
-    attr_reader :limit, :sort_order
 
     def offset
       if limit

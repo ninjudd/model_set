@@ -62,9 +62,8 @@ class ModelSet
       end
       after_query(params)
 
-      @count = @response['numFound']
-      #TODO: put this in a hook
-      @ids   = @response['docs'].collect {|doc| doc['id'].split('-').last.to_i}
+      @count = response['numFound']
+      @ids   = response['docs'].collect {|doc| set_class.as_id(doc['id'])}.to_ordered_set
       @size  = @ids.size
     end
 

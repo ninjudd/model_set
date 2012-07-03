@@ -19,7 +19,7 @@ class ModelSet
     class << self
       attr_accessor :host, :port
     end
-    attr_reader :conditions, :filters
+    attr_reader :filters, :response
 
     def max_query_time
       @max_query_time || MAX_QUERY_TIME
@@ -181,7 +181,7 @@ class ModelSet
         end
 
         begin
-          response = SystemTimer.timeout(max_query_time) do
+          @response = SystemTimer.timeout(max_query_time) do
             search.Query(opts[:query], index)
           end
           unless response
@@ -196,7 +196,7 @@ class ModelSet
         end
         
         @count = response['total_found']
-        @ids   = response['matches'].collect {|r| r['id']}.to_ordered_set
+        @ids   = response['matches'].collect {|match| set_class.as_id(match['id'])}.to_ordered_set
         @size  = @ids.size
 
         after_query(opts)
