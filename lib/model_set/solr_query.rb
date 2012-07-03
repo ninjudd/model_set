@@ -1,5 +1,5 @@
 require 'rsolr'
-require 'pp'
+require 'json'
 
 class ModelSet
   class SolrQuery < Query
@@ -44,6 +44,7 @@ class ModelSet
     def fetch_results
       params = {:q => "#{conditions.to_s}"}
       params[:fl] = @select || ['id']
+      params[:wt] = :json
       if limit
         params[:rows]  = limit
         params[:start] = offset
@@ -56,14 +57,14 @@ class ModelSet
         url = "http://" + self.class.host
         url += "/" + @core if @core
         search = RSolr.connect(:url => url)
-        @response = search.get('select', :params => params)['response']
+        @response = JSON.parse(search.get('select', :params => params))
       rescue Exception => e
         on_exception(e, params)
       end
       after_query(params)
 
-      @count = response['numFound']
-      @ids   = response['docs'].collect {|doc| set_class.as_id(doc['id'])}.to_ordered_set
+      @count = response['response']['numFound']
+      @ids   = response['response']['docs'].collect {|doc| set_class.as_id(doc['id'])}.to_ordered_set
       @size  = @ids.size
     end
 
