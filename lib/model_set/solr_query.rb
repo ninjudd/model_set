@@ -39,11 +39,19 @@ class ModelSet
       @select = fields.flatten
     end
 
+    def id_field
+      if set_class.respond_to?(:solr_id_field)
+        set_class.solr_id_field
+      else
+        'id'
+      end
+    end
+
   private
 
     def fetch_results
       params = {:q => "#{conditions.to_s}"}
-      params[:fl] = @select || ['id']
+      params[:fl] = @select || [id_field]
       params[:wt] = :json
       if limit
         params[:rows]  = limit
@@ -64,7 +72,7 @@ class ModelSet
       after_query(params)
 
       @count = response['response']['numFound']
-      @ids   = response['response']['docs'].collect {|doc| set_class.as_id(doc['id'])}.to_ordered_set
+      @ids   = response['response']['docs'].collect {|doc| set_class.as_id(doc[id_field])}.to_ordered_set
       @size  = @ids.size
     end
 

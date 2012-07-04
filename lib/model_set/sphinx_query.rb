@@ -119,6 +119,14 @@ class ModelSet
       @ids
     end
 
+    def id_field
+      if set_class.respond_to?(:sphinx_id_field)
+        set_class.sphinx_id_field
+      else
+        'id'
+      end
+    end
+
     class SphinxError < StandardError
       attr_accessor :opts
       def message
@@ -143,7 +151,7 @@ class ModelSet
         search = Sphinx::Client.new
         search.SetMaxQueryTime(max_query_time * 1000)
         search.SetServer(self.class.host, self.class.port)
-        search.SetSelect((@select || ['id']).join(','))
+        search.SetSelect((@select || [id_field]).join(','))
         search.SetMatchMode(Sphinx::Client::SPH_MATCH_EXTENDED2)
         if limit
           search.SetLimits(offset, limit, MAX_SPHINX_RESULTS)
@@ -196,7 +204,7 @@ class ModelSet
         end
         
         @count = response['total_found']
-        @ids   = response['matches'].collect {|match| set_class.as_id(match['id'])}.to_ordered_set
+        @ids   = response['matches'].collect {|match| set_class.as_id(match[id_field])}.to_ordered_set
         @size  = @ids.size
 
         after_query(opts)
