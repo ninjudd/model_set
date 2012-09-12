@@ -69,15 +69,17 @@ class ModelSet
     def to_s
       return conditions.first.to_s if terminal? or conditions.empty?
 
-      condition_strings = conditions.collect {|c| c.to_s}.sort_by {|s| s.size}
+      condition_strings = conditions.collect do |condition|
+        condition.operator == :not ? condition.to_s : "(#{condition.to_s})"
+      end.sort_by {|s| s.size}
 
       case operator
       when :not then
-        "(#{op(:not)} #{condition_strings.first})"
+        "#{op(:not)} #{condition_strings.first}"
       when :and then
-        "(#{condition_strings.join(op(:and))})"
+        "#{condition_strings.join(op(:and))}"
       when :or then
-        "(#{condition_strings.join(op(:or))})"
+        "#{condition_strings.join(op(:or))}"
       end
     end
 
