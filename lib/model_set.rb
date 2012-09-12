@@ -761,7 +761,9 @@ class ActiveRecord::Base
       if options[:clone] == false or args.include?(:no_clone)
         @model_set_cache[name]
       else
-        @model_set_cache[name].clone
+        set = @model_set_cache[name].clone
+        set.extend(extension_module) if extension_module
+        set
       end
     end
 

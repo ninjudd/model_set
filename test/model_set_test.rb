@@ -199,6 +199,7 @@ class ModelSetTest < Test::Unit::TestCase
       underdog     = Superpet.create(:name => 'Underdog', :owner_id => hero.id, :species => 'dog')
 
       set = hero.pets
+
       assert_equal ['mouse', 'dog', 'dog'], set.collect {|pet| pet.species}
 
       assert_equal [sammy.id, underdog.id], set.dogs!.ids
