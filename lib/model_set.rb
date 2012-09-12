@@ -1,4 +1,3 @@
-require 'rubygems'
 require 'active_record'
 require 'deep_clonable'
 require 'ordered_set'
