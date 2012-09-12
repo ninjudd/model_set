@@ -13,8 +13,8 @@ class ModelSet
   class SphinxQuery < Query
     include Conditioned
 
-    MAX_SPHINX_RESULTS = 1000
-    MAX_QUERY_TIME     = 5
+    MAX_RESULTS    = 1000
+    MAX_QUERY_TIME = 5
 
     class << self
       attr_accessor :host, :port
@@ -27,6 +27,14 @@ class ModelSet
 
     def max_query_time!(seconds)
       @max_query_time = seconds
+    end
+
+    def max_results
+      @max_results || MAX_RESULTS
+    end
+
+    def max_results!(max)
+      @max_results = max
     end
 
     def anchor!(query)
@@ -154,9 +162,9 @@ class ModelSet
         search.SetSelect((@select || [id_field]).join(','))
         search.SetMatchMode(Sphinx::Client::SPH_MATCH_EXTENDED2)
         if limit
-          search.SetLimits(offset, limit, MAX_SPHINX_RESULTS)
+          search.SetLimits(offset, limit, max_results)
         else
-          search.SetLimits(0, MAX_SPHINX_RESULTS, MAX_SPHINX_RESULTS)
+          search.SetLimits(0, max_results, max_results)
         end
 
         search.SetSortMode(*@sort_order) if @sort_order
@@ -203,7 +211,7 @@ class ModelSet
           on_exception(e)
         end
         
-        @count = response['total_found']
+        @count = [response['total_found'], max_results].min
         @ids   = response['matches'].collect {|match| set_class.as_id(match[id_field])}.to_ordered_set
         @size  = @ids.size
 
