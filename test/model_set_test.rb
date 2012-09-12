@@ -1,4 +1,4 @@
-require 'test_helper'
+require File.dirname(__FILE__) + '/test_helper'
 
 class ModelSetTest < Test::Unit::TestCase
   class CreateTables < ActiveRecord::Migration
