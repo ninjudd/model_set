@@ -35,8 +35,8 @@ class ModelSet
       @core = core
     end
 
-    def select_fields!(*fields)
-      @select = fields.flatten
+    def solr_params!(opts)
+      @opts = opts
     end
 
     def id_field
@@ -50,8 +50,9 @@ class ModelSet
   private
 
     def fetch_results
-      params = {:q => "#{conditions.to_s}"}
-      params[:fl] = @select || [id_field]
+      params = @opts || {}
+      params[:q] = "#{conditions.to_s}"
+      params[:fl] ||= [id_field]
       params[:wt] = :json
       if limit
         params[:rows]  = limit
