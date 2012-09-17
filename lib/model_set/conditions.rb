@@ -9,8 +9,8 @@ class ModelSet
     end
 
     def initialize(conditions, ops)
+      @ops = ops
       if conditions.kind_of?(Array)
-        @ops      = ops
         @operator = conditions.first.kind_of?(Symbol) ? conditions.shift : :and
         if @operator == :not
           # In this case, :not actually means :and :not.
