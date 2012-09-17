@@ -53,6 +53,7 @@ class ModelSet
       params = @opts || {}
       params[:q] = "#{conditions.to_s}"
       params[:fl] ||= [id_field]
+      params[:fl] = params[:fl].join(",")
       params[:wt] = :json
       if limit
         params[:rows]  = limit
