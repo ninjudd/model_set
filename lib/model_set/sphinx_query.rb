@@ -114,6 +114,10 @@ class ModelSet
       @count
     end
 
+    def total_count
+      response['total_found']
+    end
+
     def ids
       fetch_results if @ids.nil?
       @ids
