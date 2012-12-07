@@ -227,6 +227,7 @@ class ModelSet
   def reject_raw!(&block)
     anchor!(:raw)
     query.reject!(&block)
+    self
   end
 
   def select_raw(&block)
