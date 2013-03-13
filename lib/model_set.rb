@@ -483,10 +483,14 @@ class ModelSet
   end
 
   def self.as_id(model)
-    case model
-    when ActiveRecord::Base then model.id
-    when String             then model.split('-').last.to_i
-    else                         model.to_i
+    if model_class.respond_to?(:as_id)
+      model_class.as_id(model)
+    else
+      case model
+      when ActiveRecord::Base then model.id
+      when String             then model.split('-').last.to_i
+      else                         model.to_i
+      end
     end
   end
 
