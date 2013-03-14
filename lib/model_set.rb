@@ -483,14 +483,14 @@ class ModelSet
   end
 
   def self.as_id(model)
-    if model_class.respond_to?(:as_id)
-      model_class.as_id(model)
-    else
-      case model
-      when ActiveRecord::Base then model.id
-      when String             then model.split('-').last.to_i
-      else                         model.to_i
-      end
+    id = model_class.as_id(model) if model_class.respond_to?(:as_id)
+    return id if id
+
+    case model
+    when model_class        then model.send(id_field)
+    when ActiveRecord::Base then model.id
+    when String             then model.split('-').last.to_i
+    else                         model.to_i
     end
   end
 
@@ -650,15 +650,10 @@ private
   end
 
   def as_id(model)
-    case model
-    when model_class
+    id = self.class.as_id(model)
+    if model.kind_of?(model_class)
       # Save the model object if it is of the same type as our models.
-      id = model.send(id_field)
       models_by_id[id] ||= model
-    when ActiveRecord::Base
-      id = model.id
-    else
-      id = model.to_i
     end
     raise "id not found for model: #{model.inspect}" if id.nil?
     id
