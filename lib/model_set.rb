@@ -51,7 +51,7 @@ class ModelSet
 
   [:add!, :unshift!, :subtract!, :intersect!, :reorder!, :reverse_reorder!].each do |action|
     define_method(action) do |models|
-      anchor!(:set)
+      reanchor!(:set)
       query.send(action, as_ids(models))
       self
     end
