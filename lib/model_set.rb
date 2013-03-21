@@ -66,6 +66,8 @@ class ModelSet
   alias delete subtract!
   alias without! subtract!
   clone_method :without
+  clone_method :reorder
+  clone_method :reverse_reorder
 
   clone_method :shuffle
   def shuffle!
