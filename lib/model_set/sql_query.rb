@@ -54,12 +54,7 @@ class ModelSet
 
     def add_joins!(*joins)
       @joins ||= []
-
-      joins.each do |join|
-        @joins << sanitize_condition(join)
-      end
-      @joins.uniq!
-
+      @joins.concat(joins)
       clear_cache!
     end
 
@@ -70,7 +65,7 @@ class ModelSet
     def order_by!(*args)
       opts = args.last.kind_of?(Hash) ? args.pop : {}
 
-      @sort_join  = sanitize_condition(opts[:join])
+      @sort_join  = opts[:join]
       @sort_order = args
       @reorder    = nil
       clear_cache!
@@ -120,9 +115,12 @@ class ModelSet
     def join_clause
       return unless @joins or @sort_join
       joins = []
-      joins << @joins      if @joins
+      joins << @joins     if @joins
       joins << @sort_join if @sort_join
-      joins.join(' ')
+
+      joins.flatten.collect do |join|
+        sanitize_condition(join)
+      end.uniq.join(' ')
     end
   end
 end
