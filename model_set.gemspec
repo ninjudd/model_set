@@ -1,11 +1,10 @@
 # -*- encoding: utf-8 -*-
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'model_set/version'
 
 Gem::Specification.new do |gem|
-  gem.name          = "test"
-  gem.version       = ModelSet::VERSION
+  gem.name          = "model_set"
+  gem.version       = IO.read('VERSION')
   gem.authors       = ["Justin Balthrop"]
   gem.email         = ["git@justinbalthrop.com"]
   gem.description   = %q{Easy manipulation of sets of ActiveRecord models}
