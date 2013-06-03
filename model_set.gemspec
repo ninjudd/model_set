@@ -15,6 +15,7 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'rsolr'
   gem.add_development_dependency 'json'
   gem.add_development_dependency 'rake'
+  gem.add_development_dependency 'system_timer'
   gem.add_development_dependency 'activerecord-postgresql-adapter'
 
   gem.add_dependency 'ordered_set',   '>= 1.0.1'

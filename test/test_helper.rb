@@ -5,9 +5,6 @@ require 'mocha/setup'
 require 'pp'
 
 $LOAD_PATH.unshift File.dirname(__FILE__) + "/../lib"
-['deep_clonable', 'ordered_set'].each do |dir|
-  $LOAD_PATH.unshift File.dirname(__FILE__) + "/../../#{dir}/lib"
-end
 require 'model_set'
 
 class Test::Unit::TestCase
