@@ -9,6 +9,7 @@ Gem::Specification.new do |gem|
   gem.description   = %q{Easy manipulation of sets of ActiveRecord models}
   gem.summary       = gem.description
   gem.homepage      = "https://github.com/ninjudd/model_set"
+  gem.license       = 'MIT'
 
   gem.add_development_dependency 'shoulda', '3.0.1'
   gem.add_development_dependency 'mocha'
