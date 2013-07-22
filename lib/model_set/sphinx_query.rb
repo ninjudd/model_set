@@ -1,5 +1,4 @@
 require File.dirname(__FILE__) + '/../../vendor/sphinx_client/lib/sphinx'
-require 'system_timer'
 
 class ModelSet
   class SphinxQuery < Query
@@ -193,7 +192,7 @@ class ModelSet
         end
 
         begin
-          @response = SystemTimer.timeout(max_query_time) do
+          @response = timeout(max_query_time) do
             search.Query(opts[:query], index)
           end
           unless response
