@@ -9,17 +9,17 @@ module Sphinx
     
     # Put int(s) to request.
     def put_int(*ints)
-      ints.each { |i| @request << [i].pack('N') }
+      ints.each { |i| request << [i].pack('N') }
     end
 
     # Put 64-bit int(s) to request.
     def put_int64(*ints)
-      ints.each { |i| @request << [i].pack('q').reverse }#[i >> 32, i & ((1 << 32) - 1)].pack('NN') }
+      ints.each { |i| request << [i].pack('q').reverse }#[i >> 32, i & ((1 << 32) - 1)].pack('NN') }
     end
 
     # Put string(s) to request (first length, then the string itself).
     def put_string(*strings)
-      strings.each { |s| @request << [s.length].pack('N') + s }
+      strings.each { |s| request << [s.bytesize].pack('N') + convert_to_binary(s) }
     end
     
     # Put float(s) to request.
@@ -27,7 +27,7 @@ module Sphinx
       floats.each do |f|
         t1 = [f].pack('f') # machine order
         t2 = t1.unpack('L*').first # int in machine order
-        @request << [t2].pack('N')
+        request << [t2].pack('N')
       end
     end
     
@@ -44,7 +44,26 @@ module Sphinx
     
     # Returns the entire message
     def to_s
-      @request
+      request
     end
+
+  private
+
+    def request
+      if @request.respond_to?(:force_encodng)
+        @request.force_encoding('ASCII-8BIT')
+      else
+        @request
+      end
+    end
+
+    def convert_to_binary(s)
+      if s.respond_to?(:force_encoding)
+        s.dup.force_encoding('ASCII-8BIT')
+      else
+        s
+      end
+    end
+
   end
 end
